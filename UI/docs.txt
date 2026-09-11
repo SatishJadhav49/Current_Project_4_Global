@@ -1,0 +1,569 @@
+
+
+        public async Task<List<DefectsData>> GetVehicleDefectsByNo(string vehicleNo)
+        {
+            List<DefectsData> defects = new();
+
+            using SqlConnection con = _connectionFactory.CreateConnection();
+            using SqlCommand cmd = new SqlCommand("SP_Get_Vehicle_Defects_By_No", con);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@Vehicle_No", vehicleNo);
+
+            await con.OpenAsync();
+
+            using SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                defects.Add(new DefectsData
+                {
+                    Audit_Type = reader["Audit_Type"]?.ToString(),
+                    Auditor_Name = reader["Auditor_Name"]?.ToString(),
+                    Problem_Desc = reader["Problem_Desc"]?.ToString(),
+                    Severity_Name = reader["Severity_Name"]?.ToString(),
+                    Attribution_Name = reader["Attribution_Name"]?.ToString(),
+                    Shop_Name = reader["Shop_Name"]?.ToString(),
+                    Reported_Date = reader["Reported_Date"] != DBNull.Value
+                        ? Convert.ToDateTime(reader["Reported_Date"])
+                        : DateTime.MinValue
+                });
+            }
+
+
+            return defects
+                .OrderByDescending(x => x.Reported_Date)
+                .ToList();
+        }
+
+        public async Task<VehicleInfo> GetVehicleInfo(string vehicleNo)
+        {
+            VehicleInfo vehicle = new();
+
+            using SqlConnection con = _connectionFactory.CreateConnection();
+            using SqlCommand cmd = new SqlCommand("SP_GetDataFrom_Vin_Number", con);
+
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.AddWithValue("@VIN_Number", vehicleNo);
+
+            await con.OpenAsync();
+
+            using SqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+            // Result Set 1 - Vehicle Details
+            if (await reader.ReadAsync())
+            {
+                vehicle = new VehicleInfo
+                {
+                    VIN_Number = reader["VIN_Number"]?.ToString(),
+                    BIW_No = reader["BIW_No"]?.ToString(),
+                    Model_Description = reader["Model_Description"]?.ToString(),
+                    Colour_Desc = reader["Colour_Desc"]?.ToString(),
+                    Fuel = reader["Fuel"]?.ToString(),
+                    Engine_No = reader["Engine_No"]?.ToString(),
+                    RollDown_Date = reader["RollDown_Date"] != DBNull.Value
+                        ? Convert.ToDateTime(reader["RollDown_Date"])
+                        : DateTime.MinValue,
+                    CAIOut_Date = reader["CAIOut_Date"] != DBNull.Value
+                        ? Convert.ToDateTime(reader["CAIOut_Date"])
+                        : DateTime.MinValue,
+                    Model_Name = reader["Model_Name"]?.ToString(),
+                    Country = reader["Country"]?.ToString(),
+                    Drive_Type = reader["Drive_Type"]?.ToString()
+                };
+            }
+
+            // Result Set 2 - LSP_RFD_Date
+            if (await reader.NextResultAsync() && await reader.ReadAsync())
+            {
+                vehicle.LSP_RFD_Date = reader["LSP_RFD_Date"] != DBNull.Value
+                    ? Convert.ToDateTime(reader["LSP_RFD_Date"])
+                    : null;
+            }
+
+            // Result Set 3 - Dock_Audit_Date
+            if (await reader.NextResultAsync() && await reader.ReadAsync())
+            {
+                vehicle.Dock_Audit_Date = reader["Dock_Audit_Date"] != DBNull.Value
+                    ? Convert.ToDateTime(reader["Dock_Audit_Date"])
+                    : null;
+            }
+
+            return vehicle;
+        }
+
+
+
+
+// Angular
+
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ApplicationService } from '../../services/application.service';
+import { SearchService } from '../../services/search.service';
+import { ApplicationLinks, DefectsData, PowerBIDashboard, VehicleInfo } from '../../models/application.model';
+import { PORTAL } from '../../app.constants';
+
+@Component({
+  selector: 'app-home',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './home.component.html'
+})
+export class HomeComponent implements OnInit {
+
+  readonly portal = PORTAL;
+  readonly mailtoLink = `mailto:${PORTAL.SUPPORT_EMAIL}?subject=PQ Drona%20Support%20Request`;
+
+  applications: ApplicationLinks[] = [];
+  dashboards: PowerBIDashboard[] = [];
+  defectsData: DefectsData[] = [];
+  vehicleInfo: VehicleInfo | null = null;
+
+  loadingApps = true;
+  loadingDashboards = true;
+  loadError = false;
+  defectsLoading = false;
+  defectsError = false;
+  vehicleInfoLoading = false;
+  vehicleInfoError = false;
+
+  private readonly vehicleNumberPattern = /^[A-Za-z0-9]{8,17}$/;
+
+  constructor(
+    private applicationService: ApplicationService,
+    public search: SearchService
+  ) { }
+
+  ngOnInit(): void {
+    this.loadEverything();
+
+    this.search.term$.subscribe((term: string) => {
+      const normalized = term.trim();
+
+      if (this.isVehicleSearchTerm(normalized)) {
+        this.loadVehicleData(normalized);
+        return;
+      }
+
+      this.vehicleInfo = null;
+      this.vehicleInfoLoading = false;
+      this.vehicleInfoError = false;
+      this.defectsData = [];
+      this.defectsLoading = false;
+      this.defectsError = false;
+    });
+  }
+
+  private isVehicleSearchTerm(term: string): boolean {
+    return this.vehicleNumberPattern.test(term.replace(/\s+/g, ''));
+  }
+
+  private loadVehicleData(vehicleno: string): void {
+    this.vehicleInfo = null;
+    this.vehicleInfoLoading = true;
+    this.vehicleInfoError = false;
+    this.defectsData = [];
+    this.defectsLoading = true;
+    this.defectsError = false;
+
+    this.applicationService.getVehicleInfo(vehicleno).subscribe({
+      next: (vehicleInfo) => {
+        this.vehicleInfo = vehicleInfo ?? null;
+        this.vehicleInfoLoading = false;
+
+        const vinNumber = vehicleInfo?.VIN_Number?.trim();
+        if (!vinNumber) {
+          this.defectsLoading = false;
+          return;
+        }
+
+        this.applicationService.getDefectsData(vinNumber).subscribe({
+          next: (defects) => {
+            this.defectsData = defects ?? [];
+            this.defectsLoading = false;
+          },
+          error: (err) => {
+            console.error('Defects data error', err);
+            this.defectsData = [];
+            this.defectsLoading = false;
+            this.defectsError = true;
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Vehicle info error', err);
+        this.vehicleInfo = null;
+        this.vehicleInfoLoading = false;
+        this.vehicleInfoError = true;
+        this.defectsLoading = false;
+      }
+    });
+  }
+
+  loadEverything(): void {
+    this.loadingApps = true;
+    this.loadingDashboards = true;
+    this.loadError = false;
+
+    this.applicationService.getCurrentToken().subscribe({
+      next: (tokenResponse: any) => {
+        this.applicationService.getUserApplications(tokenResponse).subscribe({
+          next: (apps) => {
+            this.applications = apps ?? [];
+            this.loadingApps = false;
+          },
+          error: (err) => {
+            console.error('App Error', err);
+            this.loadingApps = false;
+            this.loadError = true;
+          }
+        });
+
+        this.applicationService.getPowerBIDashboards(tokenResponse).subscribe({
+          next: (dashboards) => {
+            this.dashboards = dashboards ?? [];
+            this.loadingDashboards = false;
+          },
+          error: (err) => {
+            console.error('PowerBI Error', err);
+            this.loadingDashboards = false;
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Token Error', err);
+        this.loadingApps = false;
+        this.loadingDashboards = false;
+        this.loadError = true;
+      }
+    });
+  }
+
+  get activeVehicleSearch(): boolean {
+    return this.isVehicleSearchTerm(this.search.term.trim());
+  }
+
+  get hasVehicleResults(): boolean {
+    return this.activeVehicleSearch && this.defectsData.length > 0;
+  }
+
+  get filteredApplications(): ApplicationLinks[] {
+    const q = this.search.term.trim().toLowerCase();
+    if (!q) return this.applications;
+    return this.applications.filter(a =>
+      a.Application_Name.toLowerCase().includes(q) ||
+      a.DBName.toLowerCase().includes(q)
+    );
+  }
+
+  get filteredDashboards(): PowerBIDashboard[] {
+    const q = this.search.term.trim().toLowerCase();
+    if (!q) return this.dashboards;
+    return this.dashboards.filter(d =>
+      d.Dashboard_Name.toLowerCase().includes(q) ||
+      d.Description.toLowerCase().includes(q) ||
+      d.Workspace.toLowerCase().includes(q)
+    );
+  }
+
+
+async exportDefectsToExcel(): Promise<void> {
+  if (!this.defectsData.length) return;
+
+  const XLSX = await import('xlsx-js-style');
+
+  const rows = this.defectsData.map(item => ({
+    'Audit Type': item.Audit_Type ?? '',
+    'Problem Description': item.Problem_Desc ?? '',
+    'Severity': item.Severity_Name ?? '',
+    'Auditor': item.Auditor_Name ?? '',
+    'Reported Date': item.Reported_Date ?? '',
+    'Attribution': item.Attribution_Name ?? '',
+    'Shop': item.Shop_Name ?? ''
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(rows, {
+    header: [
+      'Audit Type',
+      'Problem Description',
+      'Severity',
+      'Auditor',
+      'Reported Date',
+      'Attribution',
+      'Shop'
+    ],
+    skipHeader: false
+  });
+
+  // Header Style
+  const headerStyle = {
+    fill: {
+      fgColor: { rgb: 'FFFF00' }, // Yellow
+      patternType: 'solid'
+    },
+    font: {
+      bold: true,
+      color: { rgb: '000000' }
+    },
+    border: {
+      top: { style: 'thin', color: { rgb: 'B7C9D9' } },
+      bottom: { style: 'thin', color: { rgb: 'B7C9D9' } },
+      left: { style: 'thin', color: { rgb: 'B7C9D9' } },
+      right: { style: 'thin', color: { rgb: 'B7C9D9' } }
+    },
+    alignment: {
+      vertical: 'center',
+      horizontal: 'center',
+      wrapText: true
+    }
+  };
+
+  // Data Cell Style
+  const dataStyle = {
+    alignment: {
+      vertical: 'center',
+      horizontal: 'center'
+    }
+  };
+
+  const columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+  const keys = Object.keys(rows[0] ?? {});
+
+  columns.forEach((colKey, index) => {
+    const headerCell = `${colKey}1`;
+
+    if (worksheet[headerCell]) {
+      worksheet[headerCell].s = headerStyle;
+    }
+
+    const lengths = rows.map(row => {
+      const record = row as Record<string, any>;
+      const value = record[keys[index]] ?? '';
+      return String(value).length;
+    });
+
+    const maxLength = Math.max(
+      (keys[index] ?? '').length,
+      ...lengths,
+      12
+    );
+
+    (worksheet['!cols'] ??= [])[index] = {
+      wch: Math.min(maxLength + 2, 50)
+    };
+  });
+
+  // Apply style to data rows
+  const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+
+  for (let row = 1; row <= range.e.r; row++) {
+    for (let col = 0; col <= range.e.c; col++) {
+      const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+
+      if (worksheet[cellRef]) {
+        worksheet[cellRef].s = dataStyle;
+      }
+    }
+  }
+
+  // Row heights
+  worksheet['!rows'] = [
+    { hpx: 30 },
+    ...Array(rows.length).fill({ hpx: 22 })
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    'Vehicle Defects'
+  );
+
+  const fileName = `vehicle-defects-${
+    this.search.term.trim() || 'export'
+  }.xlsx`;
+
+  XLSX.writeFile(workbook, fileName);
+}
+
+  /** Same navigation rules as the old application. */
+  onAppNavigate(applicationLink: string, appName: string): void {
+    if (appName === 'GNOVA-C') {
+      window.open(applicationLink, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    const url = `${window.location.origin}/${applicationLink}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  /** Two-letter monogram for the app tile. */
+  initials(name: string): string {
+    const words = name.replace(/[^a-zA-Z0-9 ]/g, ' ').trim().split(/\s+/);
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  trackByApp(_: number, item: ApplicationLinks): string {
+    return item.DBName;
+  }
+
+  trackByDashboard(_: number, item: PowerBIDashboard): string {
+    return item.Dashboard_Url;
+  }
+}
+
+
+
+  <section *ngIf="activeVehicleSearch" class="mb-11">
+    <div class="mb-4 flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-bold text-ink">Vehicle History</h2>
+        <p class="text-sm text-slate-500">Search result for <strong>{{ search.term.trim() }}</strong></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700" *ngIf="!defectsLoading">{{ defectsData.length }} records</span>
+        <button
+          *ngIf="hasVehicleResults"
+          type="button"
+          (click)="exportDefectsToExcel()"
+          class="inline-flex items-center gap-2 rounded-lg bg-green-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-green-600">
+          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v12"/>
+            <path d="m7 22 5-5 5 5"/>
+            <path d="M4 14h16"/>
+          </svg>
+          Export Excel
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="vehicleInfoLoading" class="mb-5 rounded-xl border border-gray-200 bg-white p-5">
+      <div class="mb-4 h-4 w-32 rounded bg-slate-200 animate-pulse"></div>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="h-10 rounded bg-slate-100 animate-pulse" *ngFor="let item of [1, 2, 3, 4]"></div>
+      </div>
+    </div>
+
+    <div *ngIf="vehicleInfoError" class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+      Vehicle information could not be loaded for this number.
+    </div>
+
+    <div *ngIf="vehicleInfo" class="mb-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="mb-4 flex items-center gap-3">
+        <div class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rose-50 text-brand">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m5 17 1.5-5h11L19 17"/>
+            <path d="M7 17h10"/>
+            <circle cx="7.5" cy="17.5" r="1.5"/>
+            <circle cx="16.5" cy="17.5" r="1.5"/>
+            <path d="M8 12V9h8v3"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-bold text-ink">Vehicle Information</h3>
+          <p class="text-xs text-slate-500">Details for the searched vehicle</p>
+        </div>
+      </div>
+
+      <dl class="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">VIN Number</dt>
+          <dd class="mt-1 break-all text-sm font-semibold text-ink">{{ vehicleInfo.VIN_Number || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">BIW Number</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.BIW_No || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Model</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.Model_Name || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Model Description</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.Model_Description || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Colour</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.Colour_Desc || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Fuel</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.Fuel || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Engine Number</dt>
+          <dd class="mt-1 break-all text-sm font-semibold text-ink">{{ vehicleInfo.Engine_No || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Country</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.Country || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Drive Type</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.Drive_Type || '—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Roll Down Date</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.RollDown_Date | date:'dd-MMM-yy HH:mm a' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">CAI Out Date</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.CAIOut_Date | date:'dd-MMM-yy HH:mm a' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">Dock Audit Date</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.Dock_Audit_Date | date:'dd-MMM-yy HH:mm a' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-400">LSP RFD Date</dt>
+          <dd class="mt-1 text-sm font-semibold text-ink">{{ vehicleInfo.LSP_RFD_Date | date:'dd-MMM-yy HH:mm a' }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div *ngIf="defectsLoading" class="rounded-xl border border-gray-200 bg-white p-6">
+      <div class="h-4 w-40 rounded bg-slate-200 animate-pulse"></div>
+    </div>
+
+    <div *ngIf="defectsError" class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">
+      Unable to fetch defects data for this vehicle number. Please try again or use the support options below.
+    </div>
+
+    <div *ngIf="!defectsLoading && !defectsError && defectsData.length === 0" class="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-slate-500">
+      No defects found for this vehicle number.
+    </div>
+
+    <div *ngIf="hasVehicleResults" class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm text-slate-700">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-semibold">Source</th>
+              <th class="px-4 py-3 font-semibold">Problem Description</th>
+              <th class="px-4 py-3 font-semibold">Severity</th>
+              <th class="px-4 py-3 font-semibold">Attribution</th>
+              <th class="px-4 py-3 font-semibold">Shop</th>
+              <th class="px-4 py-3 font-semibold">Auditor</th>
+              <th class="px-4 py-3 font-semibold">Reported Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of defectsData" class="border-t border-gray-200 align-top">
+              <td class="px-4 py-3">{{ item.Audit_Type || '—' }}</td>
+              <td class="px-4 py-3 max-w-md">{{ item.Problem_Desc || '—' }}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700">
+                  {{ item.Severity_Name || '—' }}
+                </span>
+              </td>
+              <td class="px-4 py-3">{{ item.Attribution_Name || '—' }}</td>
+              <td class="px-4 py-3">{{ item.Shop_Name || '—' }}</td>
+              <td class="px-4 py-3">{{ item.Auditor_Name || '—' }}</td>
+              <td class="px-4 py-3 whitespace-nowrap">{{item.Reported_Date | date :'dd-MMM-yy HH:mm a'}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
