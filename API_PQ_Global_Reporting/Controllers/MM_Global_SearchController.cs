@@ -44,21 +44,24 @@ namespace API_PQ_Global_Reporting.Controllers
             }
         }
 
-        [HttpGet("GetVehicleDefects/{vehicleNo}")]
-        public async Task<IActionResult> GetVehicleDefects(string vehicleNo)
+        [HttpGet("GetVehicleDefects")]
+        public async Task<IActionResult> GetVehicleDefects([FromQuery] string? vinNumber, [FromQuery] string? biwNo)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(vehicleNo))
+                if (string.IsNullOrWhiteSpace(vinNumber) && string.IsNullOrWhiteSpace(biwNo))
                 {
                     var validationResponse = _responseHelper.CreateErrorResponse<object>(
                         Constants.Messages.VALIDATION_ERROR,
-                        "Vehicle number is required"
+                        "VIN number or BIW number is required"
                     );
                     return BadRequest(validationResponse);
                 }
 
-                var defects = await _globalSearchDataService.GetVehicleDefectsByNo(vehicleNo.Trim());
+                var defects = await _globalSearchDataService.GetVehicleDefectsByNo(
+                    vinNumber?.Trim() ?? string.Empty,
+                    biwNo?.Trim() ?? string.Empty
+                );
 
                 var response = _responseHelper.CreateSuccessResponse(defects, "Success", "Vehicle defects retrieved successfully");
                 return Ok(response);

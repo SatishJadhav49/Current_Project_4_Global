@@ -1,6 +1,15 @@
-import { Component, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Workbook } from 'exceljs';
+import { saveAs } from 'file-saver';
 import { ReportsService } from '../reports.service';
 import { DefectsData, VehicleInfo } from '../reports.model';
 import { ToastService } from '../../../services';
@@ -12,7 +21,9 @@ import { ToastService } from '../../../services';
   templateUrl: './globalsearch.component.html',
   styleUrl: './globalsearch.component.css',
 })
-export class GlobalsearchComponent {
+export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+
   searchTerm = '';
   searchedTerm = '';
 
@@ -25,18 +36,53 @@ export class GlobalsearchComponent {
   vehicleInfoLoading = false;
   vehicleInfoError = false;
 
-  private readonly vehicleNumberPattern = /^[A-Za-z0-9]{8,17}$/;
+  // Auto search fires when the entered number is one of these lengths
+  private readonly searchLengths = [7, 10, 17];
+  private readonly alphaNumericPattern = /^[A-Za-z0-9]+$/;
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly reportsService = inject(ReportsService);
   readonly toastService = inject(ToastService);
 
+  ngAfterViewInit(): void {
+    setTimeout(() => this.searchInput?.nativeElement.focus());
+  }
+
+  ngOnDestroy(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+  }
+
+  /** Auto search while typing - only when the term looks complete. */
+  onTermChange(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    const normalized = this.searchTerm.trim();
+
+    if (!this.isVehicleSearchTerm(normalized) || normalized === this.searchedTerm) {
+      return;
+    }
+
+    this.debounceTimer = setTimeout(() => {
+      this.runSearch(normalized);
+    }, 400);
+  }
+
+  /** Manual search - search button / enter key. */
   search(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
     const normalized = this.searchTerm.trim();
 
     if (!normalized) {
       this.toastService.showWarning(
         'Vehicle Number Required',
-        'Please enter a vehicle / VIN number to search.'
+        'Please enter a VIN / BIW number to search.'
       );
       return;
     }
@@ -44,17 +90,19 @@ export class GlobalsearchComponent {
     if (!this.isVehicleSearchTerm(normalized)) {
       this.toastService.showWarning(
         'Invalid Vehicle Number',
-        'Vehicle / VIN number must be 8 to 17 letters or digits.'
+        'Enter a valid VIN / BIW number of 7, 10 or 17 characters.'
       );
       return;
     }
 
-    this.searchedTerm = normalized;
-    this.searched = true;
-    this.loadVehicleData(normalized);
+    this.runSearch(normalized);
   }
 
   reset(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
     this.searchTerm = '';
     this.searchedTerm = '';
     this.searched = false;
@@ -64,10 +112,22 @@ export class GlobalsearchComponent {
     this.defectsData = [];
     this.defectsLoading = false;
     this.defectsError = false;
+
+    this.searchInput?.nativeElement.focus();
   }
 
   private isVehicleSearchTerm(term: string): boolean {
-    return this.vehicleNumberPattern.test(term.replace(/\s+/g, ''));
+    const value = term.replace(/\s+/g, '');
+    return (
+      this.alphaNumericPattern.test(value) &&
+      this.searchLengths.includes(value.length)
+    );
+  }
+
+  private runSearch(vehicleno: string): void {
+    this.searchedTerm = vehicleno;
+    this.searched = true;
+    this.loadVehicleData(vehicleno);
   }
 
   private loadVehicleData(vehicleno: string): void {
@@ -83,13 +143,15 @@ export class GlobalsearchComponent {
         this.vehicleInfo = vehicleInfo ?? null;
         this.vehicleInfoLoading = false;
 
-        const vinNumber = vehicleInfo?.VIN_Number?.trim();
-        if (!vinNumber) {
+        const vinNumber = vehicleInfo?.VIN_Number?.trim() ?? '';
+        const biwNo = vehicleInfo?.BIW_No?.trim() ?? '';
+
+        if (!vinNumber && !biwNo) {
           this.defectsLoading = false;
           return;
         }
 
-        this.reportsService.getDefectsData(vinNumber).subscribe({
+        this.reportsService.getDefectsData(vinNumber, biwNo).subscribe({
           next: (defects) => {
             this.defectsData = defects ?? [];
             this.defectsLoading = false;
@@ -119,9 +181,6 @@ export class GlobalsearchComponent {
   async exportDefectsToExcel(): Promise<void> {
     if (!this.defectsData.length) return;
 
-    const ExcelJS = await import('exceljs');
-    const { saveAs } = await import('file-saver');
-
     const headers = [
       'Audit Type',
       'Problem Description',
@@ -142,7 +201,7 @@ export class GlobalsearchComponent {
       item.Shop_Name ?? '',
     ]);
 
-    const workbook = new ExcelJS.Workbook();
+    const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('Vehicle Defects');
 
     const headerRow = worksheet.addRow(headers);

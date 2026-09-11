@@ -567,3 +567,6 @@ async exportDefectsToExcel(): Promise<void> {
       </div>
     </div>
   </section>
+
+
+npm install exceljs@^4.4.0 file-saver@^2.0.5 && npm install -D @types/file-saver@^2.0.7

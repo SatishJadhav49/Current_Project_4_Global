@@ -13,7 +13,7 @@ namespace API_PQ_Global_Reporting.Data
             _connectionFactory = connectionFactory;
         }
 
-        public async Task<List<DefectsDataDto>> GetVehicleDefectsByNo(string vehicleNo)
+        public async Task<List<DefectsDataDto>> GetVehicleDefectsByNo(string vinNumber, string biwNo)
         {
             try
             {
@@ -22,7 +22,8 @@ namespace API_PQ_Global_Reporting.Data
                 using var connection = await _connectionFactory.CreateConnectionAsync();
                 using var command = new SqlCommand("SP_Get_Vehicle_Defects_By_No", connection);
                 command.CommandType = CommandType.StoredProcedure;
-                command.Parameters.Add(new SqlParameter("@Vehicle_No", vehicleNo));
+                command.Parameters.Add(new SqlParameter("@Vehicle_No", string.IsNullOrWhiteSpace(vinNumber) ? (object)DBNull.Value : vinNumber));
+                command.Parameters.Add(new SqlParameter("@BIW_No", string.IsNullOrWhiteSpace(biwNo) ? (object)DBNull.Value : biwNo));
 
                 using var reader = await command.ExecuteReaderAsync();
 
@@ -62,6 +63,7 @@ namespace API_PQ_Global_Reporting.Data
                 using var command = new SqlCommand("SP_GetDataFrom_Vin_Number", connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters.Add(new SqlParameter("@VIN_Number", vehicleNo));
+                command.Parameters.Add(new SqlParameter("@BIW_No", vehicleNo));
 
                 using var reader = await command.ExecuteReaderAsync();
 

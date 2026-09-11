@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\API_PQ_Global_Reporting.props" />
+</Project>

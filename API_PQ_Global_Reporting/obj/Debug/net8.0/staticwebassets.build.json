@@ -1,1 +1,11 @@
-{"Version":1,"Hash":"iQHkBaYH1v+ZWbGo/Dfh6o2h2sNYn2sSUbOxNgehZ6c=","Source":"API_PQ_Global_Reporting","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{
+  "Version": 1,
+  "Hash": "DH5hC9vWVew+Lo/xy557r/d6qL9CEecpm4PSAZKpRzQ=",
+  "Source": "API_PQ_Global_Reporting",
+  "BasePath": "_content/API_PQ_Global_Reporting",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

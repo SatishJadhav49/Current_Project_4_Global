@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("API_PQ_Global_Reporting")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+12de3c8a2049e8bdab3f715c3b8ca5e60ba145f9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3a9fe4132f8a1f15f8333b227d793368e7a568b2")]
 [assembly: System.Reflection.AssemblyProductAttribute("API_PQ_Global_Reporting")]
 [assembly: System.Reflection.AssemblyTitleAttribute("API_PQ_Global_Reporting")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
