@@ -1,36 +1,29 @@
 {
   "format": 1,
   "restore": {
-    "D:\\GitHub\\PQ_Dashboard\\PQ_Global_Reporting\\API_PQ_Global_Reporting\\API_PQ_Global_Reporting.csproj": {}
+    "C:\\Satish\\Current_Project_4_Global\\API_PQ_Global_Reporting\\API_PQ_Global_Reporting.csproj": {}
   },
   "projects": {
-    "D:\\GitHub\\PQ_Dashboard\\PQ_Global_Reporting\\API_PQ_Global_Reporting\\API_PQ_Global_Reporting.csproj": {
+    "C:\\Satish\\Current_Project_4_Global\\API_PQ_Global_Reporting\\API_PQ_Global_Reporting.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\GitHub\\PQ_Dashboard\\PQ_Global_Reporting\\API_PQ_Global_Reporting\\API_PQ_Global_Reporting.csproj",
+        "projectUniqueName": "C:\\Satish\\Current_Project_4_Global\\API_PQ_Global_Reporting\\API_PQ_Global_Reporting.csproj",
         "projectName": "API_PQ_Global_Reporting",
-        "projectPath": "D:\\GitHub\\PQ_Dashboard\\PQ_Global_Reporting\\API_PQ_Global_Reporting\\API_PQ_Global_Reporting.csproj",
-        "packagesPath": "C:\\Users\\50005817\\.nuget\\packages\\",
-        "outputPath": "D:\\GitHub\\PQ_Dashboard\\PQ_Global_Reporting\\API_PQ_Global_Reporting\\obj\\",
+        "projectPath": "C:\\Satish\\Current_Project_4_Global\\API_PQ_Global_Reporting\\API_PQ_Global_Reporting.csproj",
+        "packagesPath": "C:\\Users\\satis\\.nuget\\packages\\",
+        "outputPath": "C:\\Satish\\Current_Project_4_Global\\API_PQ_Global_Reporting\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\50005817\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\satis\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
-            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -44,12 +37,10 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.300"
+        }
       },
       "frameworks": {
         "net8.0": {
-          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "DocumentFormat.OpenXml": {
@@ -100,24 +91,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.29, 8.0.29]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.29, 8.0.29]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.29, 8.0.29]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.29, 8.0.29]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -126,7 +99,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.302/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.422/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

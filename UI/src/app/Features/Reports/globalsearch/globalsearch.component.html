@@ -1,0 +1,345 @@
+<div class="p-4 max-w-8xl mx-auto bg-white rounded-lg shadow">
+  <div class="bg-gray-800 shadow-sm rounded-lg mb-6">
+    <div class="px-6 py-2 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-white text-center">Global Search</h1>
+    </div>
+  </div>
+
+  <!-- Search Row -->
+  <div class="flex flex-wrap items-end gap-4 mb-6">
+    <div class="relative flex-1 min-w-[240px]">
+      <label class="block mb-1 text-gray-700 text-sm font-medium"
+        >Vehicle / VIN Number</label
+      >
+      <div class="relative">
+        <input
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="search()"
+          type="text"
+          placeholder="Enter vehicle / VIN number..."
+          class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <div
+          class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+        >
+          <svg
+            class="h-5 w-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            ></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <button
+        type="button"
+        (click)="search()"
+        class="px-6 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
+      >
+        Search
+      </button>
+    </div>
+
+    <div>
+      <button
+        type="button"
+        (click)="reset()"
+        class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
+      >
+        Reset
+      </button>
+    </div>
+  </div>
+
+  @if (searched) {
+  <section class="mb-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900">Vehicle History</h2>
+        <p class="text-sm text-gray-500">
+          Search result for <strong>{{ searchedTerm }}</strong>
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        @if (!defectsLoading) {
+        <span
+          class="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700"
+          >{{ defectsData.length }} records</span
+        >
+        } @if (hasVehicleResults) {
+        <button
+          type="button"
+          (click)="exportDefectsToExcel()"
+          class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 3v12" />
+            <path d="m7 22 5-5 5 5" />
+            <path d="M4 14h16" />
+          </svg>
+          Export Excel
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- Vehicle Information -->
+    @if (vehicleInfoLoading) {
+    <div class="mb-5 rounded-xl border border-gray-200 bg-white p-5">
+      <div class="mb-4 h-4 w-32 rounded bg-gray-200 animate-pulse"></div>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        @for (item of [1, 2, 3, 4]; track item) {
+        <div class="h-10 rounded bg-gray-100 animate-pulse"></div>
+        }
+      </div>
+    </div>
+    } @if (vehicleInfoError) {
+    <div
+      class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"
+    >
+      Vehicle information could not be loaded for this number.
+    </div>
+    } @if (vehicleInfo) {
+    <div class="mb-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div class="mb-4 flex items-center gap-3">
+        <div
+          class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-rose-50 text-[#e31837]"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            class="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="m5 17 1.5-5h11L19 17" />
+            <path d="M7 17h10" />
+            <circle cx="7.5" cy="17.5" r="1.5" />
+            <circle cx="16.5" cy="17.5" r="1.5" />
+            <path d="M8 12V9h8v3" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-900">Vehicle Information</h3>
+          <p class="text-xs text-gray-500">Details for the searched vehicle</p>
+        </div>
+      </div>
+
+      <dl class="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            VIN Number
+          </dt>
+          <dd class="mt-1 break-all text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.VIN_Number || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            BIW Number
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.BIW_No || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Model
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.Model_Name || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Model Description
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.Model_Description || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Colour
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.Colour_Desc || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Fuel
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.Fuel || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Engine Number
+          </dt>
+          <dd class="mt-1 break-all text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.Engine_No || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Country
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.Country || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Drive Type
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ vehicleInfo.Drive_Type || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Roll Down Date
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ (vehicleInfo.RollDown_Date | date : "dd-MMM-yy HH:mm a") || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            CAI Out Date
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ (vehicleInfo.CAIOut_Date | date : "dd-MMM-yy HH:mm a") || "—" }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            Dock Audit Date
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{
+              (vehicleInfo.Dock_Audit_Date | date : "dd-MMM-yy HH:mm a") || "—"
+            }}
+          </dd>
+        </div>
+        <div>
+          <dt
+            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+          >
+            LSP RFD Date
+          </dt>
+          <dd class="mt-1 text-sm font-semibold text-gray-900">
+            {{ (vehicleInfo.LSP_RFD_Date | date : "dd-MMM-yy HH:mm a") || "—" }}
+          </dd>
+        </div>
+      </dl>
+    </div>
+    }
+
+    <!-- Defects -->
+    @if (defectsLoading) {
+    <div class="rounded-xl border border-gray-200 bg-white p-6">
+      <div class="h-4 w-40 rounded bg-gray-200 animate-pulse"></div>
+    </div>
+    } @if (defectsError) {
+    <div
+      class="rounded-xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900"
+    >
+      Unable to fetch defects data for this vehicle number. Please try again.
+    </div>
+    } @if (!defectsLoading && !defectsError && defectsData.length === 0) {
+    <div
+      class="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500"
+    >
+      No defects found for this vehicle number.
+    </div>
+    } @if (hasVehicleResults) {
+    <div
+      class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+    >
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm text-gray-700">
+          <thead class="bg-sky-600 text-white">
+            <tr>
+              <th class="px-4 py-3 font-semibold">Source</th>
+              <th class="px-4 py-3 font-semibold">Problem Description</th>
+              <th class="px-4 py-3 font-semibold">Severity</th>
+              <th class="px-4 py-3 font-semibold">Attribution</th>
+              <th class="px-4 py-3 font-semibold">Shop</th>
+              <th class="px-4 py-3 font-semibold">Auditor</th>
+              <th class="px-4 py-3 font-semibold">Reported Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of defectsData; track $index) {
+            <tr class="border-t border-gray-200 align-top">
+              <td class="px-4 py-3">{{ item.Audit_Type || "—" }}</td>
+              <td class="px-4 py-3 max-w-md">{{ item.Problem_Desc || "—" }}</td>
+              <td class="px-4 py-3">
+                <span
+                  class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700"
+                >
+                  {{ item.Severity_Name || "—" }}
+                </span>
+              </td>
+              <td class="px-4 py-3">{{ item.Attribution_Name || "—" }}</td>
+              <td class="px-4 py-3">{{ item.Shop_Name || "—" }}</td>
+              <td class="px-4 py-3">{{ item.Auditor_Name || "—" }}</td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                {{ (item.Reported_Date | date : "dd-MMM-yy HH:mm a") || "—" }}
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
+  </section>
+  }
+</div>

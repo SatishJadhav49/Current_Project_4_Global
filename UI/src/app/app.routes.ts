@@ -31,6 +31,7 @@ export const routes: Routes = [
     path: 'reports',
     loadChildren: () =>
       import('./Features/Reports/reports.routes').then((m) => m.ReportsRoutes),
+    canActivate: [AuthGuard],
   },
   //Wildcard route - must be last
   { path: '**', component: PlaceholderComponent },

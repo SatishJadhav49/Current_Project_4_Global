@@ -33,6 +33,7 @@ builder.Services.AddScoped<MM_ErrorLogDataService>();
 builder.Services.AddScoped<MM_User_RolesDataService>();
 builder.Services.AddScoped<MM_CommonDataService>();
 builder.Services.AddScoped<MM_Documents_MasterDataService>();
+builder.Services.AddScoped<MM_Global_SearchDataService>();
 
 builder.Services.AddScoped<MailNotificationService>();
 // Register Utils Services
