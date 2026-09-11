@@ -1,0 +1,29 @@
+
+
+Nashik - A003
+
+ "SystemSettings": {
+    "BaseUrl": "https://dronanskpq.mahindra.com/PQMCAR/Portal",
+    "ReportURL": "https://mmnsk1drsv.corp.mahindra.com/DronaRep/reportserver?/PQ Dashboard/MCAR/MCARReport&rs:Command=Render&rs:Format=PDF&Concern_ID="
+  },
+
+"DefaultConnection": "Server=10.3.48.51;Database=PQ_MCAR;User Id=DRONAADMIN;Password=admin#123;Integrated Security=False;Trusted_Connection=false;MultipleActiveResultSets=true;TrustServerCertificate=True",
+
+
+
+ Chakan - CK01
+
+  "SystemSettings": {
+    "BaseUrl": "https://dronachkpq.mahindra.com/PQMCAR/Portal",
+    "ReportURL": "http://mvml-drnrs.corp.mahindra.com/DronaRep/reportserver?/PQ Dashboard/MCAR/MCARReport&rs:Command=Render&rs:Format=PDF&Concern_ID="
+  },
+
+ "DefaultConnection": "Server=10.192.68.78;Database=PQ_MCAR;User Id=DRONAADMIN;Password=admin#123;Integrated Security=False;Trusted_Connection=false;MultipleActiveResultSets=true;TrustServerCertificate=True"
+
+
+  Haridwar - A010
+
+ "BaseUrl": "http://10.62.7.50:2443/PQMCAR",
+  "ReportURL": "http://mmhrddrnrs/DronaRep/reportserver?/PQ Dashboard/MCAR/MCARReport&rs:Command=Render&rs:Format=PDF&Concern_ID="
+
+ "DefaultConnection": "Server=10.62.7.50;Database=PQ_MCAR;User Id=DRONAADMIN;Password=admin#123;Integrated Security=False;Trusted_Connection=false;MultipleActiveResultSets=true;TrustServerCertificate=True"

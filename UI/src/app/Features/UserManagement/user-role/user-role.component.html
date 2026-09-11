@@ -1,0 +1,289 @@
+<div class="p-4 max-w-8xl mx-auto bg-white rounded-lg shadow">
+  <div class="bg-gray-800 shadow-sm rounded-lg mb-6">
+    <div class="px-6 py-2 border-b border-gray-200">
+      <h1 class="text-xl font-bold text-white text-center">User Role</h1>
+    </div>
+  </div>
+
+  @if(isCreate || Editing_User_Role_Key){
+  <!-- Form Row -->
+  <div class="flex flex-wrap items-center gap-4 mb-6">
+    <!-- Employee Name -->
+    <div class="relative flex-1 employee-dropdown">
+      <label class="block mb-1 text-gray-700 text-sm font-medium"
+        >Employee Name</label
+      >
+      <button
+        (click)="employeeOpen = !employeeOpen"
+        class="w-full text-left px-3 py-2 bg-white text-black flex items-center justify-start focus:ring-blue-500 focus:ring border rounded"
+      >
+        <span class="truncate">
+          {{
+            selectedEmployee
+              ? selectedEmployee.Employee_Name
+              : "Select Employee"
+          }}
+        </span>
+        <svg
+          class="w-3 h-3 ml-auto"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 10 6"
+        >
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m1 1 4 4 4-4"
+          />
+        </svg>
+      </button>
+
+      <!-- Dropdown -->
+      @if (employeeOpen) {
+      <div
+        class="absolute mt-1 w-full bg-white rounded-lg shadow z-10 max-h-60 overflow-y-auto"
+      >
+        <!-- Search Box -->
+        <div class="p-2 border-b">
+          <input
+            type="text"
+            [(ngModel)]="employeeSearch"
+            placeholder="Search employee"
+            class="w-full p-2 border rounded-lg text-sm"
+          />
+        </div>
+
+        <!-- Employee List (single selection) -->
+        <ul class="p-2 space-y-2">
+          @for (emp of Employee | search: employeeSearch; track
+          emp.Employee_ID){
+          <li>
+            <button
+              type="button"
+              (click)="selectEmployee(emp)"
+              [class.bg-amber-100]="
+                selectedEmployee?.Employee_ID === emp.Employee_ID
+              "
+              class="w-full text-left px-2 py-1 rounded hover:bg-blue-100"
+            >
+              {{ emp.Employee_Name }}
+            </button>
+          </li>
+          } @empty {
+          <li class="p-2 text-red-500">No Employee found.</li>
+          }
+        </ul>
+      </div>
+      }
+    </div>
+
+    <!-- Role Dropdown -->
+    <div class="relative flex-1 role-dropdown">
+      <label class="block mb-1 text-gray-700 text-sm font-medium">Roles</label>
+      <button
+        (click)="roleOpen = !roleOpen"
+        class="w-full text-left px-3 py-2 bg-white text-black flex items-center justify-start focus:ring-blue-500 focus:outline-none focus:ring border rounded"
+      >
+        {{ getSelectedRoleNames() }}
+
+        <svg
+          class="w-3 h-3 ml-auto"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 10 6"
+        >
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m1 1 4 4 4-4"
+          />
+        </svg>
+      </button>
+      @if (roleOpen) {
+      <div class="absolute mt-1 w-full bg-white border rounded-lg shadow z-10">
+        <ul class="p-2 space-y-2">
+          @for (role of Role; track role) {
+          <li>
+            <label class="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                [checked]="SelectedRoles.includes(role)"
+                (change)="toggleSelection(role)"
+              />
+              <span>{{ role.Role_Name }}</span>
+            </label>
+          </li>
+          }
+        </ul>
+      </div>
+      }
+    </div>
+
+    <!-- Rights Dropdown -->
+    <div class="relative flex-1 rights-dropdown">
+      <label class="block mb-1 text-gray-700 text-sm font-medium">Rights</label>
+      <button
+        (click)="rightsOpen = !rightsOpen"
+        class="w-full text-left px-3 py-2 bg-white text-black flex items-center justify-start focus:ring-blue-500 focus:outline-none focus:ring border rounded"
+      >
+        {{
+          SelectedRights.length > 0
+            ? SelectedRights.join(", ")
+            : "Select Rights"
+        }}
+        <svg
+          class="w-3 h-3 ml-auto"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 10 6"
+        >
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m1 1 4 4 4-4"
+          />
+        </svg>
+      </button>
+      @if (rightsOpen) {
+      <div class="absolute mt-1 w-full bg-white border rounded-lg shadow z-10">
+        <ul class="p-2 space-y-2">
+          @for (right of RightsList; track right) {
+          <li>
+            <label class="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                [checked]="SelectedRights.includes(right)"
+                (change)="toggleRight(right)"
+              />
+              <span>{{ right }}</span>
+            </label>
+          </li>
+          }
+        </ul>
+      </div>
+      }
+    </div>
+
+    <!-- Save Button -->
+    <div class="pt-6">
+      @if (Editing_User_Role_Key === null) {
+      <button
+        (click)="saveUserRole()"
+        class="px-5 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 w-full"
+      >
+        Save
+      </button>
+      } @else {
+      <button
+        (click)="updateUserRole()"
+        class="px-5 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 w-full"
+      >
+        Save Changes
+      </button>
+      }
+    </div>
+    <div class="pt-6">
+      <button
+            type="button"
+            (click)="refreshData()"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200"
+          >
+            Reset
+          </button>
+    </div>
+  </div>
+}
+
+  <!-- Search Filter -->
+  <div class="bg-white shadow-sm rounded-lg mt-6">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <!-- <h2 class="text-xl font-semibold text-gray-900">User List</h2> -->
+        <div class="relative w-full">
+          <input
+            [(ngModel)]="dataSearch"
+            type="text"
+            placeholder="Search user roles..."
+            class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <div
+            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+          >
+            <svg
+              class="h-5 w-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <table class="w-full mt-4 border">
+      <thead class="bg-sky-600 text-white">
+        <tr>
+          <th class="p-2 border">Name</th>
+          <th class="p-2 border">Roles</th>
+          <th class="p-2 border">Create</th>
+          <th class="p-2 border">Update</th>
+          <th class="p-2 border">Delete</th>
+          <th class="p-2 border">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (emp of EmployeeList | search : dataSearch; track $index) {
+        <tr>
+          <td class="p-2 border">{{ emp.Employee_Name }}</td>
+          <td class="p-2 border">{{ emp.Role_Name }}</td>
+          <td class="p-2 border text-center">
+            {{ emp.Is_Create ? "Yes" : "No" }}
+          </td>
+          <td class="p-2 border text-center">
+            {{ emp.Is_Edit ? "Yes" : "No" }}
+          </td>
+          <td class="p-2 border text-center">
+            {{ emp.Is_Delete ? "Yes" : "No" }}
+          </td>
+          <td class="p-2 border text-center">
+            @if(isEdit){
+              <button
+              class="p-1.5 rounded bg-[#0b9494] text-red-700 hover:bg-teal-700 transition-colors w-12 h-12"
+              (click)="editData(emp)"
+              title="Edit User Role"
+            >
+              ✏️
+            </button>
+            }@if(isDelete){
+              <button
+              class="p-1.5 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors w-12 h-12 ml-3"
+              (click)="deleteUserRole(emp)"
+              title="Delete User Role"
+            >
+              🗑️
+            </button>
+            }
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

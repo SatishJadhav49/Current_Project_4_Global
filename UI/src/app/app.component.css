@@ -1,0 +1,44 @@
+/* Additional component-specific styles */
+.sidebar-menu-item:hover {
+  background-color: rgba(55, 65, 81, 1);
+}
+
+.sidebar-submenu-item:hover {
+  background-color: rgba(55, 65, 81, 1);
+}
+
+/* Smooth transitions for sidebar */
+.sidebar-submenu {
+  transition: max-height 0.3s ease-in-out;
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background: #6B7280;
+  border-radius: 2px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar-menu-item {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .sidebar-submenu-item {
+    padding: 8px 32px;
+    font-size: 13px;
+  }
+}

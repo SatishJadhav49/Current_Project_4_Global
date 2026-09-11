@@ -1,0 +1,185 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\data\\mm_concerndataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:data\\mm_concerndataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\data\\mm_employeedataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:data\\mm_employeedataservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\connectionstrings.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:connectionstrings.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\controllers\\mm_concerndatacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:controllers\\mm_concerndatacontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\controllers\\mm_documents_mastercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:controllers\\mm_documents_mastercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\mail\\services\\basemailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:mail\\services\\basemailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|d:\\github\\pq_dashboard\\pq_mcar\\API_PQ_Global_Reporting\\controllers\\mm_employeecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12345678-1234-1234-1234-123456789012}|API_PQ_Global_Reporting.csproj|solutionrelative:controllers\\mm_employeecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "BaseMailService.cs",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Mail\\Services\\BaseMailService.cs",
+              "RelativeDocumentMoniker": "Mail\\Services\\BaseMailService.cs",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Mail\\Services\\BaseMailService.cs",
+              "RelativeToolTip": "Mail\\Services\\BaseMailService.cs",
+              "ViewState": "AgIAAKwAAAAAAAAAAAAhwMYAAABFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-02T02:20:01.036Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "MM_ConcernDataController.cs",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Controllers\\MM_ConcernDataController.cs",
+              "RelativeDocumentMoniker": "Controllers\\MM_ConcernDataController.cs",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Controllers\\MM_ConcernDataController.cs",
+              "RelativeToolTip": "Controllers\\MM_ConcernDataController.cs",
+              "ViewState": "AgIAAGIAAAAAAAAAAAApwHwAAABbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-02T02:19:44.056Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "connectionstrings.txt",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\connectionstrings.txt",
+              "RelativeDocumentMoniker": "connectionstrings.txt",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\connectionstrings.txt",
+              "RelativeToolTip": "connectionstrings.txt",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAADPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
+              "WhenOpened": "2026-02-18T09:59:58.388Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-02-18T09:59:53.49Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-18T09:59:50.956Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MM_EmployeeDataService.cs",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Data\\MM_EmployeeDataService.cs",
+              "RelativeDocumentMoniker": "Data\\MM_EmployeeDataService.cs",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Data\\MM_EmployeeDataService.cs",
+              "RelativeToolTip": "Data\\MM_EmployeeDataService.cs",
+              "ViewState": "AgIAADgAAAAAAAAAAIAwwFAAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-18T09:44:38.344Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "MM_Documents_MasterController.cs",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Controllers\\MM_Documents_MasterController.cs",
+              "RelativeDocumentMoniker": "Controllers\\MM_Documents_MasterController.cs",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Controllers\\MM_Documents_MasterController.cs",
+              "RelativeToolTip": "Controllers\\MM_Documents_MasterController.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAIAxwB8AAABXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T05:26:36.418Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MM_ConcernDataService.cs",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Data\\MM_ConcernDataService.cs",
+              "RelativeDocumentMoniker": "Data\\MM_ConcernDataService.cs",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Data\\MM_ConcernDataService.cs",
+              "RelativeToolTip": "Data\\MM_ConcernDataService.cs",
+              "ViewState": "AgIAAHoBAAAAAAAAAAASwI8BAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-29T03:48:53.273Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "appsettings.Development.json",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\appsettings.Development.json",
+              "RelativeToolTip": "appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-07-22T06:41:07.793Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "MM_EmployeeController.cs",
+              "DocumentMoniker": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Controllers\\MM_EmployeeController.cs",
+              "RelativeDocumentMoniker": "Controllers\\MM_EmployeeController.cs",
+              "ToolTip": "D:\\GitHub\\PQ_Dashboard\\PQ_MCAR\\API_PQ_Global_Reporting\\Controllers\\MM_EmployeeController.cs",
+              "RelativeToolTip": "Controllers\\MM_EmployeeController.cs",
+              "ViewState": "AgIAAMQAAAAAAAAAAAApwOQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-18T09:44:30.162Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

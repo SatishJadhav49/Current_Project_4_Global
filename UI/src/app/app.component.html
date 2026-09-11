@@ -1,0 +1,161 @@
+<!-- Authentication Pages (Full Screen) -->
+<div *ngIf="!showMainLayout">
+  <router-outlet></router-outlet>
+</div>
+
+<div *ngIf="showMainLayout" class="min-h-screen bg-gray-100 flex">
+  <!-- Sidebar -->
+  <div
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out flex flex-col"
+    [class.translate-x-0]="isSidebarOpen"
+    [class.-translate-x-full]="!isSidebarOpen"
+  >
+    <!-- Sidebar Header (Fixed) -->
+    <div
+      class="flex items-center justify-center  bg-gray-800 border-b border-gray-700 flex-shrink-0 h-12"
+    >
+      <h1 routerLink="" class="text-xl font-bold text-white cursor-pointer">
+        PQ
+      </h1>
+    </div>
+
+    <!-- Navigation Menu (Scrollable) -->
+    <div class="flex-1 overflow-y-auto">
+      <nav class="mt-4 pb-4">
+        <!-- Loading Indicator -->
+        <div *ngIf="isLoadingMenu" class="text-center py-4">
+          <div
+            class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white"
+          ></div>
+          <p class="text-gray-300 text-sm mt-2">Loading menu...</p>
+        </div>
+
+        <!-- Menu Items -->
+        <div *ngIf="!isLoadingMenu" class="space-y-1">
+          <div *ngFor="let item of menuItems" class="mb-1">
+            <!-- Main Menu Item -->
+            <div class="sidebar-menu-item" (click)="toggleMenu(item.id)">
+              <span class="mr-3 text-lg">{{ item.icon }}</span>
+              <span class="flex-1">{{ item.label }}</span>
+              <svg
+                class="w-4 h-4 transition-transform duration-200"
+                [class.rotate-180]="activeMenu === item.id"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                ></path>
+              </svg>
+            </div>
+
+            <!-- Submenu -->
+            <div class="sidebar-submenu" [class.open]="activeMenu === item.id">
+              <a
+                *ngFor="let subItem of item.submenu"
+                class="sidebar-submenu-item"
+                (click)="navigateToRoute(subItem.route,item.menuId)"
+              >
+                {{ subItem.label }}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Menu Items Message -->
+        <div
+          *ngIf="!isLoadingMenu && menuItems.length === 0"
+          class="text-center py-4"
+        >
+          <p class="text-gray-400 text-sm">No menu items available</p>
+        </div>
+      </nav>
+    </div>
+
+    <!-- User Information at Bottom (Fixed) -->
+    <div class="p-2 bg-gray-800 border-t border-gray-700 flex-shrink-0">
+      <div class="text-center">
+        <p class="text-white text-sm font-medium">{{ userName }}</p>
+        <p class="text-gray-300 text-xs"> {{plantname}} </p>
+        <!-- -  {{ designation }} -->
+        <!-- {{ userId }} -  -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay for mobile only -->
+  <div
+    *ngIf="isSidebarOpen"
+    class="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 md:hidden"
+    (click)="toggleSidebar()"
+  ></div>
+
+  <!-- Main Content -->
+  <div class="flex-1 min-w-0 transition-all duration-300 ease-in-out"
+       [class.ml-64]="isSidebarOpen"
+       [class.ml-0]="!isSidebarOpen">
+    <!-- Top Bar -->
+    <header class="bg-[#e31837] shadow-sm border-b border-gray-200 top-0 sticky z-10">
+      <div class="flex items-center justify-between h-12">
+        <div class="flex items-center bg-white h-full">
+          <!-- Sidebar toggle button - Always visible -->
+          <button
+            class="p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+            (click)="toggleSidebar()"
+            title="Toggle Sidebar"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              ></path>
+            </svg>
+          </button>
+
+          <!-- Left side logo -->
+          <img
+            src="images/logo/mahindra.png"
+            alt="Mahindra Logo"
+            class="w-40 h-10 hidden sm:block cursor-pointer object-contain   transition-all"
+          />
+        </div>
+
+        <!-- Right side content -->
+        <div class="flex items-center space-x-4  bg-white h-full">
+          <!-- Right side image (hidden on small screens) -->
+          <img
+            src="images/logo/drona.png"
+            alt="User Avatar"
+            class="hidden sm:block object-contain w-36 h-10 cursor-pointer  transition-all"
+          />
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="p-2 ">
+      <div class=" mx-auto">
+        <!-- Router Outlet for Dynamic Component Content -->
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>
+<!-- Closing div for showMainLayout condition -->
+
+<!-- Global Toast Container - Shows on all pages -->
+<app-toast-container></app-toast-container>
+
+<!-- Global Confirmation Modal - Shows on all pages -->
+<app-confirmation-modal></app-confirmation-modal>

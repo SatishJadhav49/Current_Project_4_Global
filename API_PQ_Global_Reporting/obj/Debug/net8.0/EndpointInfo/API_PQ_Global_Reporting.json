@@ -1,0 +1,846 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "API_PQ_Global_Reporting",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/MM_Common/GetDesignationList": {
+      "get": {
+        "tags": [
+          "MM_Common"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_Common/GetShopList": {
+      "get": {
+        "tags": [
+          "MM_Common"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_Common/GetPQStatusList": {
+      "get": {
+        "tags": [
+          "MM_Common"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_Documents_Master/UploadDocumentFile": {
+      "post": {
+        "tags": [
+          "MM_Documents_Master"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ContentType": {
+                    "type": "string"
+                  },
+                  "ContentDisposition": {
+                    "type": "string"
+                  },
+                  "Headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "Length": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "Name": {
+                    "type": "string"
+                  },
+                  "FileName": {
+                    "type": "string"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Document_ID": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "Document_Title": {
+                    "type": "string"
+                  },
+                  "Document_Path": {
+                    "type": "string"
+                  },
+                  "Employee_Name": {
+                    "type": "string"
+                  },
+                  "Inserted_Date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Inserted_Host": {
+                    "type": "string"
+                  },
+                  "Inserted_User_ID": {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  "Plant_Code": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "ContentType": {
+                  "style": "form"
+                },
+                "ContentDisposition": {
+                  "style": "form"
+                },
+                "Headers": {
+                  "style": "form"
+                },
+                "Length": {
+                  "style": "form"
+                },
+                "Name": {
+                  "style": "form"
+                },
+                "FileName": {
+                  "style": "form"
+                },
+                "File": {
+                  "style": "form"
+                },
+                "Document_ID": {
+                  "style": "form"
+                },
+                "Document_Title": {
+                  "style": "form"
+                },
+                "Document_Path": {
+                  "style": "form"
+                },
+                "Employee_Name": {
+                  "style": "form"
+                },
+                "Inserted_Date": {
+                  "style": "form"
+                },
+                "Inserted_Host": {
+                  "style": "form"
+                },
+                "Inserted_User_ID": {
+                  "style": "form"
+                },
+                "Plant_Code": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_Documents_Master/GetTableData": {
+      "get": {
+        "tags": [
+          "MM_Documents_Master"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_Documents_Master/DeleteFile": {
+      "post": {
+        "tags": [
+          "MM_Documents_Master"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_Documents_Master/PostDownloadDocument": {
+      "post": {
+        "tags": [
+          "MM_Documents_Master"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/GetAllEmployees": {
+      "get": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/GetEmployeeById/{employeeId}": {
+      "get": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/CreateEmployee": {
+      "post": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_EmployeeCreateUserDto"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_EmployeeCreateUserDto"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_EmployeeCreateUserDto"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/UpdateEmployee/{employeeId}": {
+      "post": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_EmployeeUpdateUserDto"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_EmployeeUpdateUserDto"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_EmployeeUpdateUserDto"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/DeleteEmployee/{employeeId}": {
+      "post": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/GetTokenCurrent": {
+      "get": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/UserAuthentication/{id},{plantid},{Audit_Type_Id}": {
+      "get": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "plantid",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "Audit_Type_Id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/SearchToken/{id}": {
+      "get": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_EmployeeMaster/getCurrentHostName": {
+      "get": {
+        "tags": [
+          "MM_EmployeeMaster"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_User_Roles/CreateUserRole": {
+      "post": {
+        "tags": [
+          "MM_User_Roles"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_User_Role_CreateDto"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_User_Role_CreateDto"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MM_User_Role_CreateDto"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_User_Roles/DeleteUserRole": {
+      "post": {
+        "tags": [
+          "MM_User_Roles"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_User_Roles/UpdateUserRole/{UserRoleKey}": {
+      "post": {
+        "tags": [
+          "MM_User_Roles"
+        ],
+        "parameters": [
+          {
+            "name": "UserRoleKey",
+            "in": "path",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRoleUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRoleUpdateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRoleUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_User_Roles/GetAllUserRole": {
+      "get": {
+        "tags": [
+          "MM_User_Roles"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/MM_User_Roles/GetRoleList": {
+      "get": {
+        "tags": [
+          "MM_User_Roles"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DocumentRequest": {
+        "type": "object",
+        "properties": {
+          "Document_Path": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MM_EmployeeCreateUserDto": {
+        "type": "object",
+        "properties": {
+          "Employee_Name": {
+            "type": "string",
+            "nullable": true
+          },
+          "Employee_No": {
+            "type": "string",
+            "nullable": true
+          },
+          "Email_Address": {
+            "type": "string",
+            "nullable": true
+          },
+          "Designation_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Reporting_Manager_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Audit_Type_Id": {
+            "type": "number",
+            "format": "double"
+          },
+          "Plant_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Plant_Code": {
+            "type": "string",
+            "nullable": true
+          },
+          "Inserted_Host": {
+            "type": "string",
+            "nullable": true
+          },
+          "Inserted_User_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Shop_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Model_ID": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MM_EmployeeUpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "Employee_Name": {
+            "type": "string",
+            "nullable": true
+          },
+          "Employee_No": {
+            "type": "string",
+            "nullable": true
+          },
+          "Email_Address": {
+            "type": "string",
+            "nullable": true
+          },
+          "Designation_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Reporting_Manager_ID": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "Audit_Type_Id": {
+            "type": "number",
+            "format": "double"
+          },
+          "Plant_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Plant_Code": {
+            "type": "string",
+            "nullable": true
+          },
+          "Updated_Host": {
+            "type": "string",
+            "nullable": true
+          },
+          "Updated_User_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Shop_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Model_ID": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MM_User_Role_CreateDto": {
+        "type": "object",
+        "properties": {
+          "Employee_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Role_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Is_Create": {
+            "type": "boolean"
+          },
+          "Is_Edit": {
+            "type": "boolean"
+          },
+          "Is_Delete": {
+            "type": "boolean"
+          },
+          "Plant_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Audit_Type_Id": {
+            "type": "number",
+            "format": "double"
+          },
+          "Inserted_User_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Inserted_Host": {
+            "type": "string",
+            "nullable": true
+          },
+          "Inserted_Date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserRoleUpdateDto": {
+        "type": "object",
+        "properties": {
+          "User_Role_Key": {
+            "type": "number",
+            "format": "double"
+          },
+          "Employee_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Role_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Is_Create": {
+            "type": "boolean"
+          },
+          "Is_Edit": {
+            "type": "boolean"
+          },
+          "Is_Delete": {
+            "type": "boolean"
+          },
+          "Plant_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Audit_Type_Id": {
+            "type": "number",
+            "format": "double"
+          },
+          "Updated_User_ID": {
+            "type": "number",
+            "format": "double"
+          },
+          "Updated_Host": {
+            "type": "string",
+            "nullable": true
+          },
+          "Inserted_Date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

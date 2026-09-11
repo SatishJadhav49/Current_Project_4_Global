@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+.sidebar-menu-item {
+  @apply flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer transition-colors duration-200;
+}
+
+.sidebar-submenu {
+  @apply bg-gray-800 max-h-0 overflow-hidden transition-all duration-300 ease-in-out;
+}
+
+.sidebar-submenu.open {
+  @apply max-h-96;
+}
+
+.sidebar-submenu-item {
+  @apply block px-8 pl-[3.2rem] py-2 text-gray-400 hover:bg-gray-700 hover:text-white cursor-pointer transition-colors duration-200;
+}

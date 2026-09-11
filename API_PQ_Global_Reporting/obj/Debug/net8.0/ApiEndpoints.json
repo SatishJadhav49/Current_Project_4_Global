@@ -1,0 +1,374 @@
+[
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_CommonController",
+    "Method": "GetDesignationList",
+    "RelativePath": "api/MM_Common/GetDesignationList",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_CommonController",
+    "Method": "GetPQStatusList",
+    "RelativePath": "api/MM_Common/GetPQStatusList",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_CommonController",
+    "Method": "GetShopList",
+    "RelativePath": "api/MM_Common/GetShopList",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_Documents_MasterController",
+    "Method": "DeleteFile",
+    "RelativePath": "api/MM_Documents_Master/DeleteFile",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "Document_ID",
+        "Type": "System.Decimal",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_Documents_MasterController",
+    "Method": "GetTableData",
+    "RelativePath": "api/MM_Documents_Master/GetTableData",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_Documents_MasterController",
+    "Method": "PostDownloadDocument",
+    "RelativePath": "api/MM_Documents_Master/PostDownloadDocument",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "data",
+        "Type": "API_PQ_Global_Reporting.Controllers.MM_Documents_MasterController\u002BDocumentRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_Documents_MasterController",
+    "Method": "UploadDocumentFile",
+    "RelativePath": "api/MM_Documents_Master/UploadDocumentFile",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "ContentType",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "ContentDisposition",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Headers",
+        "Type": "Microsoft.AspNetCore.Http.IHeaderDictionary",
+        "IsRequired": false
+      },
+      {
+        "Name": "Length",
+        "Type": "System.Int64",
+        "IsRequired": false
+      },
+      {
+        "Name": "Name",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "FileName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "File",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      },
+      {
+        "Name": "Document_ID",
+        "Type": "System.Decimal",
+        "IsRequired": false
+      },
+      {
+        "Name": "Document_Title",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Document_Path",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Employee_Name",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Inserted_Date",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "Inserted_Host",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Inserted_User_ID",
+        "Type": "System.Nullable\u00601[[System.Decimal, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "Plant_Code",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "CreateEmployee",
+    "RelativePath": "api/MM_EmployeeMaster/CreateEmployee",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "empcreatelist",
+        "Type": "API_PQ_Global_Reporting.Models.DTOs.MM_EmployeeCreateUserDto[]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "DeleteEmployee",
+    "RelativePath": "api/MM_EmployeeMaster/DeleteEmployee/{employeeId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "employeeId",
+        "Type": "System.Decimal",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "GetAllEmployees",
+    "RelativePath": "api/MM_EmployeeMaster/GetAllEmployees",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "GetCurrentHostName",
+    "RelativePath": "api/MM_EmployeeMaster/getCurrentHostName",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "GetEmployeeById",
+    "RelativePath": "api/MM_EmployeeMaster/GetEmployeeById/{employeeId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "employeeId",
+        "Type": "System.Decimal",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "GetTokenCurrent",
+    "RelativePath": "api/MM_EmployeeMaster/GetTokenCurrent",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "SearchToken",
+    "RelativePath": "api/MM_EmployeeMaster/SearchToken/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "UpdateEmployee",
+    "RelativePath": "api/MM_EmployeeMaster/UpdateEmployee/{employeeId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "employeeId",
+        "Type": "System.Decimal",
+        "IsRequired": true
+      },
+      {
+        "Name": "empupdatelist",
+        "Type": "API_PQ_Global_Reporting.Models.DTOs.MM_EmployeeUpdateUserDto[]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_EmployeeMasterController",
+    "Method": "UserAuthentication",
+    "RelativePath": "api/MM_EmployeeMaster/UserAuthentication/{id},{plantid},{Audit_Type_Id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "plantid",
+        "Type": "System.Decimal",
+        "IsRequired": true
+      },
+      {
+        "Name": "Audit_Type_Id",
+        "Type": "System.Decimal",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_User_RolesController",
+    "Method": "CreateUserRole",
+    "RelativePath": "api/MM_User_Roles/CreateUserRole",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "createUserRoles",
+        "Type": "API_PQ_Global_Reporting.Models.DTOs.MM_User_Role_CreateDto[]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_User_RolesController",
+    "Method": "DeleteUserRole",
+    "RelativePath": "api/MM_User_Roles/DeleteUserRole",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "User_Role_Key",
+        "Type": "System.Decimal",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_User_RolesController",
+    "Method": "GetAllUserRole",
+    "RelativePath": "api/MM_User_Roles/GetAllUserRole",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_User_RolesController",
+    "Method": "GetRoleList",
+    "RelativePath": "api/MM_User_Roles/GetRoleList",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API_PQ_Global_Reporting.Controllers.MM_User_RolesController",
+    "Method": "UpdateUserRole",
+    "RelativePath": "api/MM_User_Roles/UpdateUserRole/{UserRoleKey}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "UserRoleKey",
+        "Type": "System.Decimal",
+        "IsRequired": true
+      },
+      {
+        "Name": "userroleUpdateList",
+        "Type": "API_PQ_Global_Reporting.Models.DTOs.UserRoleUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
