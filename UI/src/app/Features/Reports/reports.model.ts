@@ -15,6 +15,7 @@ export interface VehicleInfo {
 }
 
 export interface DefectsData {
+  Audit_Category?: string;
   Audit_Type?: string;
   Auditor_Name?: string;
   Problem_Desc?: string;
@@ -22,4 +23,10 @@ export interface DefectsData {
   Attribution_Name?: string;
   Shop_Name?: string;
   Reported_Date?: string | Date | null;
+}
+
+export interface DefectsCategoryGroup {
+  category: string;
+  defects: DefectsData[];
+  expanded: boolean;
 }

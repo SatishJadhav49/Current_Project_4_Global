@@ -31,6 +31,7 @@ namespace API_PQ_Global_Reporting.Data
                 {
                     defects.Add(new DefectsDataDto
                     {
+                        Audit_Category = reader["Audit_Category"]?.ToString(),
                         Audit_Type = reader["Audit_Type"]?.ToString(),
                         Auditor_Name = reader["Auditor_Name"]?.ToString(),
                         Problem_Desc = reader["Problem_Desc"]?.ToString(),

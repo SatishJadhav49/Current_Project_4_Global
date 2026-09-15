@@ -19,6 +19,7 @@ namespace API_PQ_Global_Reporting.Models.DTOs
 
     public class DefectsDataDto
     {
+        public string? Audit_Category { get; set; }
         public string? Audit_Type { get; set; }
         public string? Auditor_Name { get; set; }
         public string? Problem_Desc { get; set; }

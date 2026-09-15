@@ -11,7 +11,11 @@ import { FormsModule } from '@angular/forms';
 import { Workbook } from 'exceljs';
 import { saveAs } from 'file-saver';
 import { ReportsService } from '../reports.service';
-import { DefectsData, VehicleInfo } from '../reports.model';
+import {
+  DefectsCategoryGroup,
+  DefectsData,
+  VehicleInfo,
+} from '../reports.model';
 import { ToastService } from '../../../services';
 
 @Component({
@@ -28,6 +32,7 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
   searchedTerm = '';
 
   defectsData: DefectsData[] = [];
+  defectGroups: DefectsCategoryGroup[] = [];
   vehicleInfo: VehicleInfo | null = null;
 
   searched = false;
@@ -37,9 +42,15 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
   vehicleInfoError = false;
 
   // Auto search fires when the entered number is one of these lengths
-  private readonly searchLengths = [7, 10, 17];
+  private readonly searchLengths = [8, 10, 17];
   private readonly alphaNumericPattern = /^[A-Za-z0-9]+$/;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Display order of the audit categories. Categories that are not listed here
+  // are shown after these, sorted alphabetically - so new categories added in
+  // the stored procedure keep working without a UI change.
+  private readonly categorySortOrder = ['External', 'Internal'];
+  private readonly uncategorisedLabel = 'Others';
 
   readonly reportsService = inject(ReportsService);
   readonly toastService = inject(ToastService);
@@ -90,7 +101,7 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     if (!this.isVehicleSearchTerm(normalized)) {
       this.toastService.showWarning(
         'Invalid Vehicle Number',
-        'Enter a valid VIN / BIW number of 7, 10 or 17 characters.'
+        'Enter a valid VIN / BIW number of 8, 10 or 17 characters.'
       );
       return;
     }
@@ -110,10 +121,56 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     this.vehicleInfoLoading = false;
     this.vehicleInfoError = false;
     this.defectsData = [];
+    this.defectGroups = [];
     this.defectsLoading = false;
     this.defectsError = false;
 
     this.searchInput?.nativeElement.focus();
+  }
+
+  toggleGroup(group: DefectsCategoryGroup): void {
+    group.expanded = !group.expanded;
+  }
+
+  /** Groups the defects by Audit_Category and applies the configured order. */
+  private buildDefectGroups(defects: DefectsData[]): DefectsCategoryGroup[] {
+    const groupMap = new Map<string, DefectsData[]>();
+
+    defects.forEach((defect) => {
+      const category =
+        defect.Audit_Category?.trim() || this.uncategorisedLabel;
+
+      const existing = groupMap.get(category);
+      if (existing) {
+        existing.push(defect);
+      } else {
+        groupMap.set(category, [defect]);
+      }
+    });
+
+    return Array.from(groupMap.entries())
+      .map(([category, categoryDefects]) => ({
+        category,
+        defects: categoryDefects,
+        expanded: false,
+      }))
+      .sort((a, b) => {
+        const rankA = this.categoryRank(a.category);
+        const rankB = this.categoryRank(b.category);
+
+        return rankA !== rankB
+          ? rankA - rankB
+          : a.category.localeCompare(b.category);
+      })
+      .map((group, index) => ({ ...group, expanded: index === 0 }));
+  }
+
+  private categoryRank(category: string): number {
+    const index = this.categorySortOrder.findIndex(
+      (name) => name.toLowerCase() === category.toLowerCase()
+    );
+
+    return index === -1 ? this.categorySortOrder.length : index;
   }
 
   private isVehicleSearchTerm(term: string): boolean {
@@ -135,6 +192,7 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     this.vehicleInfoLoading = true;
     this.vehicleInfoError = false;
     this.defectsData = [];
+    this.defectGroups = [];
     this.defectsLoading = true;
     this.defectsError = false;
 
@@ -154,11 +212,13 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
         this.reportsService.getDefectsData(vinNumber, biwNo).subscribe({
           next: (defects) => {
             this.defectsData = defects ?? [];
+            this.defectGroups = this.buildDefectGroups(this.defectsData);
             this.defectsLoading = false;
           },
           error: (err) => {
             console.error('Defects data error', err);
             this.defectsData = [];
+            this.defectGroups = [];
             this.defectsLoading = false;
             this.defectsError = true;
           },
@@ -182,6 +242,7 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     if (!this.defectsData.length) return;
 
     const headers = [
+      'Audit Category',
       'Audit Type',
       'Problem Description',
       'Severity',
@@ -191,15 +252,21 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
       'Shop',
     ];
 
-    const rows = this.defectsData.map((item) => [
-      item.Audit_Type ?? '',
-      item.Problem_Desc ?? '',
-      item.Severity_Name ?? '',
-      item.Auditor_Name ?? '',
-      item.Reported_Date ?? '',
-      item.Attribution_Name ?? '',
-      item.Shop_Name ?? '',
-    ]);
+    // Export follows the same category order shown on screen
+    const rows = this.defectGroups
+      .flatMap((group) =>
+        group.defects.map((item) => ({ group: group.category, item }))
+      )
+      .map(({ group, item }) => [
+        group,
+        item.Audit_Type ?? '',
+        item.Problem_Desc ?? '',
+        item.Severity_Name ?? '',
+        item.Auditor_Name ?? '',
+        item.Reported_Date ?? '',
+        item.Attribution_Name ?? '',
+        item.Shop_Name ?? '',
+      ]);
 
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('Vehicle Defects');

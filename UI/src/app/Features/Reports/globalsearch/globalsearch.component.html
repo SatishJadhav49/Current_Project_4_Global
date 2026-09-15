@@ -279,8 +279,15 @@
 
     <!-- Defects -->
     @if (defectsLoading) {
-    <div class="rounded-xl border border-gray-200 bg-white p-6">
-      <div class="h-4 w-40 rounded bg-gray-200 animate-pulse"></div>
+    <div
+      class="flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white p-6"
+    >
+      <div
+        class="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-sky-600"
+      ></div>
+      <span class="text-sm font-medium text-gray-600"
+        >Fetching defects, please wait...</span
+      >
     </div>
     } @if (defectsError) {
     <div
@@ -295,45 +302,80 @@
       No defects found for this vehicle number.
     </div>
     } @if (hasVehicleResults) {
-    <div
-      class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-    >
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-left text-sm text-gray-700">
-          <thead class="bg-sky-600 text-white">
-            <tr>
-              <th class="px-4 py-3 font-semibold">Source</th>
-              <th class="px-4 py-3 font-semibold">Problem Description</th>
-              <th class="px-4 py-3 font-semibold">Severity</th>
-              <th class="px-4 py-3 font-semibold">Attribution</th>
-              <th class="px-4 py-3 font-semibold">Shop</th>
-              <th class="px-4 py-3 font-semibold">Auditor</th>
-              <th class="px-4 py-3 font-semibold">Reported Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of defectsData; track $index) {
-            <tr class="border-t border-gray-200 align-top">
-              <td class="px-4 py-3">{{ item.Audit_Type || "—" }}</td>
-              <td class="px-4 py-3 max-w-md">{{ item.Problem_Desc || "—" }}</td>
-              <td class="px-4 py-3">
-                <span
-                  class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700"
-                >
-                  {{ item.Severity_Name || "—" }}
-                </span>
-              </td>
-              <td class="px-4 py-3">{{ item.Attribution_Name || "—" }}</td>
-              <td class="px-4 py-3">{{ item.Shop_Name || "—" }}</td>
-              <td class="px-4 py-3">{{ item.Auditor_Name || "—" }}</td>
-              <td class="px-4 py-3 whitespace-nowrap">
-                {{ (item.Reported_Date | date : "dd-MMM-yy HH:mm a") || "—" }}
-              </td>
-            </tr>
-            }
-          </tbody>
-        </table>
+    <div class="space-y-3">
+      @for (group of defectGroups; track group.category) {
+      <div
+        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+      >
+        <!-- Category Row -->
+        <button
+          type="button"
+          (click)="toggleGroup(group)"
+          class="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-gray-50"
+          [attr.aria-expanded]="group.expanded"
+        >
+          <svg
+            class="h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200"
+            [class.rotate-90]="group.expanded"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            viewBox="0 0 24 24"
+          >
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+          <span class="font-semibold text-gray-900">{{ group.category }}</span>
+          <span
+            class="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-700"
+            >{{ group.defects.length }}</span
+          >
+        </button>
+
+        <!-- Category Defects -->
+        @if (group.expanded) {
+        <div class="overflow-x-auto border-t border-gray-200">
+          <table class="min-w-full text-left text-sm text-gray-700">
+            <thead class="bg-sky-600 text-white">
+              <tr>
+                <th class="px-4 py-3 font-semibold">Source</th>
+                <th class="px-4 py-3 font-semibold">Problem Description</th>
+                <th class="px-4 py-3 font-semibold">Severity</th>
+                <th class="px-4 py-3 font-semibold">Attribution</th>
+                <th class="px-4 py-3 font-semibold">Shop</th>
+                <th class="px-4 py-3 font-semibold">Auditor</th>
+                <th class="px-4 py-3 font-semibold">Reported Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of group.defects; track $index) {
+              <tr class="border-t border-gray-200 align-top">
+                <td class="px-4 py-3">{{ item.Audit_Type || "—" }}</td>
+                <td class="px-4 py-3 max-w-md">
+                  {{ item.Problem_Desc || "—" }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700"
+                  >
+                    {{ item.Severity_Name || "—" }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">{{ item.Attribution_Name || "—" }}</td>
+                <td class="px-4 py-3">{{ item.Shop_Name || "—" }}</td>
+                <td class="px-4 py-3">{{ item.Auditor_Name || "—" }}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  {{ (item.Reported_Date | date : "dd-MMM-yy HH:mm a") || "—" }}
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
       </div>
+      }
     </div>
     }
   </section>
