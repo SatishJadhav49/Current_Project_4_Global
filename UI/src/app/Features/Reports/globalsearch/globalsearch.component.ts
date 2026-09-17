@@ -32,6 +32,10 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
   selectedSource: AuditSourceGroup | null = null;
   vehicleInfo: VehicleInfo | null = null;
 
+  // Audit category filter - '' means All
+  availableCategories: string[] = [];
+  selectedCategory = '';
+
   searched = false;
   defectsLoading = false;
   defectsError = false;
@@ -137,8 +141,49 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     this.defectsData = [];
     this.auditSources = [];
     this.selectedSource = null;
+    this.availableCategories = [];
+    this.selectedCategory = '';
     this.defectsLoading = false;
     this.defectsError = false;
+  }
+
+  selectCategory(category: string): void {
+    if (this.selectedCategory === category) return;
+
+    this.selectedCategory = category;
+    this.applyCategoryFilter();
+  }
+
+  /** Categories present in the current result - driven by the data, not hardcoded. */
+  private buildCategories(defects: DefectsData[]): string[] {
+    const categories = new Set<string>();
+
+    defects.forEach((defect) => {
+      const category = defect.Audit_Category?.trim();
+      if (category) {
+        categories.add(category);
+      }
+    });
+
+    return Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }
+
+  private applyCategoryFilter(): void {
+    const filtered = this.selectedCategory
+      ? this.defectsData.filter(
+          (defect) =>
+            (defect.Audit_Category?.trim() ?? '').toLowerCase() ===
+            this.selectedCategory.toLowerCase()
+        )
+      : this.defectsData;
+
+    this.auditSources = this.buildAuditSources(filtered);
+
+    // Keep the open source selected when it survives the filter
+    const previousKey = this.selectedSource?.key;
+    this.selectedSource = previousKey
+      ? this.auditSources.find((source) => source.key === previousKey) ?? null
+      : null;
   }
 
   /**
@@ -233,7 +278,9 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
         this.reportsService.getDefectsData(vinNumber, biwNo).subscribe({
           next: (defects) => {
             this.defectsData = defects ?? [];
-            this.auditSources = this.buildAuditSources(this.defectsData);
+            this.availableCategories = this.buildCategories(this.defectsData);
+            this.selectedCategory = '';
+            this.applyCategoryFilter();
             this.defectsLoading = false;
           },
           error: (err) => {
@@ -255,8 +302,8 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  get hasAuditSources(): boolean {
-    return this.searched && this.auditSources.length > 0;
+  get hasResults(): boolean {
+    return this.searched && this.defectsData.length > 0;
   }
 
   get totalDefectCount(): number {

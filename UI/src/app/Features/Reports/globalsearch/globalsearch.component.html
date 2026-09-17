@@ -66,7 +66,7 @@
         </p>
       </div>
       <div class="flex items-center gap-2">
-        @if (!defectsLoading && hasAuditSources) {
+        @if (!defectsLoading && hasResults) {
         <span
           class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700"
           >{{ cleanSourceCount }} clear</span
@@ -299,13 +299,13 @@
     >
       Unable to fetch defects data for this vehicle number. Please try again.
     </div>
-    } @if (!defectsLoading && !defectsError && auditSources.length === 0) {
+    } @if (!defectsLoading && !defectsError && defectsData.length === 0) {
     <div
       class="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500"
     >
       No audit records found for this vehicle number.
     </div>
-    } @if (hasAuditSources) {
+    } @if (hasResults) {
     <div class="grid gap-4 lg:grid-cols-12">
       <!-- Left : Audit Sources -->
       <div
@@ -322,6 +322,42 @@
             >{{ auditSources.length }}</span
           >
         </div>
+
+        <!-- Audit Category Filter -->
+        @if (availableCategories.length > 1) {
+        <div
+          class="flex flex-wrap gap-1.5 border-b border-gray-200 bg-white px-3 py-2.5"
+        >
+          <button
+            type="button"
+            (click)="selectCategory('')"
+            class="rounded-full border px-3 py-1 text-xs font-semibold transition"
+            [class.border-sky-600]="selectedCategory === ''"
+            [class.bg-sky-600]="selectedCategory === ''"
+            [class.text-white]="selectedCategory === ''"
+            [class.border-gray-300]="selectedCategory !== ''"
+            [class.text-gray-600]="selectedCategory !== ''"
+            [class.hover:bg-gray-100]="selectedCategory !== ''"
+          >
+            All
+          </button>
+          @for (category of availableCategories; track category) {
+          <button
+            type="button"
+            (click)="selectCategory(category)"
+            class="rounded-full border px-3 py-1 text-xs font-semibold transition"
+            [class.border-sky-600]="selectedCategory === category"
+            [class.bg-sky-600]="selectedCategory === category"
+            [class.text-white]="selectedCategory === category"
+            [class.border-gray-300]="selectedCategory !== category"
+            [class.text-gray-600]="selectedCategory !== category"
+            [class.hover:bg-gray-100]="selectedCategory !== category"
+          >
+            {{ category }}
+          </button>
+          }
+        </div>
+        }
 
         <div class="max-h-[32rem] divide-y divide-gray-100 overflow-y-auto">
           @for (source of auditSources; track source.key) {
@@ -393,6 +429,10 @@
             </span>
             }
           </button>
+          } @empty {
+          <p class="px-4 py-6 text-center text-xs text-gray-500">
+            No audit sources in this category.
+          </p>
           }
         </div>
       </div>
