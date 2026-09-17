@@ -25,8 +25,12 @@ export interface DefectsData {
   Reported_Date?: string | Date | null;
 }
 
-export interface DefectsCategoryGroup {
-  category: string;
+/** One audit occurrence - a source audited on a given date. */
+export interface AuditSourceGroup {
+  key: string;
+  sourceName: string;
+  auditDate: string | Date | null;
   defects: DefectsData[];
-  expanded: boolean;
+  defectCount: number;
+  hasDefects: boolean;
 }

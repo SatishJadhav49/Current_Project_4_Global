@@ -11,11 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { Workbook } from 'exceljs';
 import { saveAs } from 'file-saver';
 import { ReportsService } from '../reports.service';
-import {
-  DefectsCategoryGroup,
-  DefectsData,
-  VehicleInfo,
-} from '../reports.model';
+import { AuditSourceGroup, DefectsData, VehicleInfo } from '../reports.model';
 import { ToastService } from '../../../services';
 
 @Component({
@@ -32,7 +28,8 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
   searchedTerm = '';
 
   defectsData: DefectsData[] = [];
-  defectGroups: DefectsCategoryGroup[] = [];
+  auditSources: AuditSourceGroup[] = [];
+  selectedSource: AuditSourceGroup | null = null;
   vehicleInfo: VehicleInfo | null = null;
 
   searched = false;
@@ -46,11 +43,7 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
   private readonly alphaNumericPattern = /^[A-Za-z0-9]+$/;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Display order of the audit categories. Categories that are not listed here
-  // are shown after these, sorted alphabetically - so new categories added in
-  // the stored procedure keep working without a UI change.
-  private readonly categorySortOrder = ['External', 'Internal'];
-  private readonly uncategorisedLabel = 'Others';
+  private readonly unknownSourceLabel = 'Unknown Source';
 
   readonly reportsService = inject(ReportsService);
   readonly toastService = inject(ToastService);
@@ -73,7 +66,10 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
 
     const normalized = this.searchTerm.trim();
 
-    if (!this.isVehicleSearchTerm(normalized) || normalized === this.searchedTerm) {
+    if (
+      !this.isVehicleSearchTerm(normalized) ||
+      normalized === this.searchedTerm
+    ) {
       return;
     }
 
@@ -120,57 +116,70 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     this.vehicleInfo = null;
     this.vehicleInfoLoading = false;
     this.vehicleInfoError = false;
-    this.defectsData = [];
-    this.defectGroups = [];
-    this.defectsLoading = false;
-    this.defectsError = false;
+    this.clearDefects();
 
     this.searchInput?.nativeElement.focus();
   }
 
-  toggleGroup(group: DefectsCategoryGroup): void {
-    group.expanded = !group.expanded;
+  selectSource(source: AuditSourceGroup): void {
+    this.selectedSource = source;
   }
 
-  /** Groups the defects by Audit_Category and applies the configured order. */
-  private buildDefectGroups(defects: DefectsData[]): DefectsCategoryGroup[] {
-    const groupMap = new Map<string, DefectsData[]>();
+  private clearDefects(): void {
+    this.defectsData = [];
+    this.auditSources = [];
+    this.selectedSource = null;
+    this.defectsLoading = false;
+    this.defectsError = false;
+  }
+
+  /**
+   * Builds one row per audit occurrence - a source audited on a given date.
+   * Rows coming back without a problem description mean the audit was done
+   * and nothing was reported, so the source is counted with zero defects.
+   */
+  private buildAuditSources(defects: DefectsData[]): AuditSourceGroup[] {
+    const sourceMap = new Map<string, AuditSourceGroup>();
 
     defects.forEach((defect) => {
-      const category =
-        defect.Audit_Category?.trim() || this.uncategorisedLabel;
+      const sourceName = defect.Audit_Type?.trim() || this.unknownSourceLabel;
+      const auditDate = defect.Reported_Date ?? null;
+      const key = `${sourceName}|${this.dateKey(auditDate)}`;
 
-      const existing = groupMap.get(category);
-      if (existing) {
-        existing.push(defect);
-      } else {
-        groupMap.set(category, [defect]);
+      let source = sourceMap.get(key);
+      if (!source) {
+        source = {
+          key,
+          sourceName,
+          auditDate,
+          defects: [],
+          defectCount: 0,
+          hasDefects: false,
+        };
+        sourceMap.set(key, source);
+      }
+
+      if (defect.Problem_Desc?.trim()) {
+        source.defects.push(defect);
+        source.defectCount = source.defects.length;
+        source.hasDefects = true;
       }
     });
 
-    return Array.from(groupMap.entries())
-      .map(([category, categoryDefects]) => ({
-        category,
-        defects: categoryDefects,
-        expanded: false,
-      }))
-      .sort((a, b) => {
-        const rankA = this.categoryRank(a.category);
-        const rankB = this.categoryRank(b.category);
-
-        return rankA !== rankB
-          ? rankA - rankB
-          : a.category.localeCompare(b.category);
-      })
-      .map((group, index) => ({ ...group, expanded: index === 0 }));
+    return Array.from(sourceMap.values()).sort(
+      (a, b) => this.dateValue(b.auditDate) - this.dateValue(a.auditDate)
+    );
   }
 
-  private categoryRank(category: string): number {
-    const index = this.categorySortOrder.findIndex(
-      (name) => name.toLowerCase() === category.toLowerCase()
-    );
+  private dateKey(value: string | Date | null): string {
+    const time = this.dateValue(value);
+    return time ? time.toString() : '';
+  }
 
-    return index === -1 ? this.categorySortOrder.length : index;
+  private dateValue(value: string | Date | null): number {
+    if (!value) return 0;
+    const time = new Date(value).getTime();
+    return isNaN(time) ? 0 : time;
   }
 
   private isVehicleSearchTerm(term: string): boolean {
@@ -191,10 +200,8 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     this.vehicleInfo = null;
     this.vehicleInfoLoading = true;
     this.vehicleInfoError = false;
-    this.defectsData = [];
-    this.defectGroups = [];
+    this.clearDefects();
     this.defectsLoading = true;
-    this.defectsError = false;
 
     this.reportsService.getVehicleInfo(vehicleno).subscribe({
       next: (vehicleInfo) => {
@@ -212,13 +219,13 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
         this.reportsService.getDefectsData(vinNumber, biwNo).subscribe({
           next: (defects) => {
             this.defectsData = defects ?? [];
-            this.defectGroups = this.buildDefectGroups(this.defectsData);
+            this.auditSources = this.buildAuditSources(this.defectsData);
             this.defectsLoading = false;
           },
           error: (err) => {
             console.error('Defects data error', err);
             this.defectsData = [];
-            this.defectGroups = [];
+            this.auditSources = [];
             this.defectsLoading = false;
             this.defectsError = true;
           },
@@ -234,39 +241,48 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  get hasVehicleResults(): boolean {
-    return this.searched && this.defectsData.length > 0;
+  get hasAuditSources(): boolean {
+    return this.searched && this.auditSources.length > 0;
+  }
+
+  get totalDefectCount(): number {
+    return this.auditSources.reduce(
+      (total, source) => total + source.defectCount,
+      0
+    );
+  }
+
+  get cleanSourceCount(): number {
+    return this.auditSources.filter((source) => !source.hasDefects).length;
   }
 
   async exportDefectsToExcel(): Promise<void> {
-    if (!this.defectsData.length) return;
+    if (!this.totalDefectCount) return;
 
     const headers = [
+      'Source',
+      'Audit Date',
       'Audit Category',
-      'Audit Type',
       'Problem Description',
       'Severity',
-      'Auditor',
-      'Reported Date',
       'Attribution',
       'Shop',
+      'Auditor',
     ];
 
-    // Export follows the same category order shown on screen
-    const rows = this.defectGroups
-      .flatMap((group) =>
-        group.defects.map((item) => ({ group: group.category, item }))
-      )
-      .map(({ group, item }) => [
-        group,
-        item.Audit_Type ?? '',
+    // Export follows the same source order shown on screen
+    const rows = this.auditSources.flatMap((source) =>
+      source.defects.map((item) => [
+        source.sourceName,
+        item.Reported_Date ?? '',
+        item.Audit_Category ?? '',
         item.Problem_Desc ?? '',
         item.Severity_Name ?? '',
-        item.Auditor_Name ?? '',
-        item.Reported_Date ?? '',
         item.Attribution_Name ?? '',
         item.Shop_Name ?? '',
-      ]);
+        item.Auditor_Name ?? '',
+      ])
+    );
 
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('Vehicle Defects');
