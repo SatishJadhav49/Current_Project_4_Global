@@ -11,6 +11,12 @@ export class AppConfig {
   // public apiPort: String = '443';
 
 
+  // Python AI service (defect summary)
+  public aiApiPath: String = 'http://localhost:8000/service/';
+
+  // For Live
+  // public aiApiPath: String = 'http://<ai-server>:8000/service/';
+
   public apiProtocol?: String;
   public apiHostName?: String;
   public baseApiPath: String;

@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  HostListener,
   OnDestroy,
   ViewChild,
   inject,
@@ -35,6 +36,12 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
   // Audit category filter - '' means All
   availableCategories: string[] = [];
   selectedCategory = '';
+
+  // AI summary
+  summaryOpen = false;
+  summaryLoading = false;
+  summaryError = '';
+  summaryHtml = '';
 
   searched = false;
   defectsLoading = false;
@@ -137,6 +144,152 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     this.selectedSource = source;
   }
 
+  //*************************************** AI Summary ***************************************//
+
+  /** Defects currently in view - respects the active category filter. */
+  get visibleDefects(): DefectsData[] {
+    return this.auditSources.flatMap((source) => source.defects);
+  }
+
+  openSummary(): void {
+    const defects = this.visibleDefects;
+    if (!defects.length) return;
+
+    this.summaryOpen = true;
+    this.loadSummary(defects);
+  }
+
+  closeSummary(): void {
+    this.summaryOpen = false;
+  }
+
+  retrySummary(): void {
+    this.loadSummary(this.visibleDefects);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.summaryOpen) {
+      this.closeSummary();
+    }
+  }
+
+  private loadSummary(defects: DefectsData[]): void {
+    this.summaryLoading = true;
+    this.summaryError = '';
+    this.summaryHtml = '';
+
+    this.reportsService.getDefectsSummary(defects).subscribe({
+      next: (response) => {
+        const summary = response?.summary?.trim() ?? '';
+
+        if (!summary) {
+          this.summaryError = 'The AI service did not return a summary.';
+        } else {
+          this.summaryHtml = this.markdownToHtml(summary);
+        }
+
+        this.summaryLoading = false;
+      },
+      error: (err) => {
+        console.error('Defect summary error', err);
+        this.summaryError =
+          'Unable to generate the summary right now. Please try again.';
+        this.summaryLoading = false;
+      },
+    });
+  }
+
+  /**
+   * Renders the LLM markdown response. The result is bound with [innerHTML],
+   * so Angular's sanitizer strips anything unsafe while keeping the
+   * formatting tags.
+   */
+  private markdownToHtml(markdown: string): string {
+    const text = (markdown ?? '').trim();
+    if (!text) return '';
+
+    // Already HTML - hand it straight to the sanitizer
+    if (/<(p|div|ul|ol|li|h[1-6]|strong|em|br|table|span)\b/i.test(text)) {
+      return text;
+    }
+
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const html: string[] = [];
+    let listType: 'ul' | 'ol' | null = null;
+
+    const closeList = () => {
+      if (listType) {
+        html.push(`</${listType}>`);
+        listType = null;
+      }
+    };
+
+    escaped.split(/\r?\n/).forEach((rawLine) => {
+      const line = rawLine.trim();
+
+      if (!line) {
+        closeList();
+        return;
+      }
+
+      if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
+        closeList();
+        html.push('<hr />');
+        return;
+      }
+
+      const heading = line.match(/^(#{1,6})\s+(.*)$/);
+      if (heading) {
+        closeList();
+        const level = Math.min(heading[1].length + 2, 6);
+        html.push(
+          `<h${level}>${this.inlineMarkdown(heading[2])}</h${level}>`
+        );
+        return;
+      }
+
+      const bullet = line.match(/^[-*•]\s+(.*)$/);
+      if (bullet) {
+        if (listType !== 'ul') {
+          closeList();
+          html.push('<ul>');
+          listType = 'ul';
+        }
+        html.push(`<li>${this.inlineMarkdown(bullet[1])}</li>`);
+        return;
+      }
+
+      const numbered = line.match(/^\d+[.)]\s+(.*)$/);
+      if (numbered) {
+        if (listType !== 'ol') {
+          closeList();
+          html.push('<ol>');
+          listType = 'ol';
+        }
+        html.push(`<li>${this.inlineMarkdown(numbered[1])}</li>`);
+        return;
+      }
+
+      closeList();
+      html.push(`<p>${this.inlineMarkdown(line)}</p>`);
+    });
+
+    closeList();
+    return html.join('');
+  }
+
+  private inlineMarkdown(text: string): string {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*(?!\s)([^*]+?)\*/g, '$1<em>$2</em>')
+      .replace(/`([^`]+?)`/g, '<code>$1</code>');
+  }
+
   private clearDefects(): void {
     this.defectsData = [];
     this.auditSources = [];
@@ -145,6 +298,11 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     this.selectedCategory = '';
     this.defectsLoading = false;
     this.defectsError = false;
+
+    this.summaryOpen = false;
+    this.summaryLoading = false;
+    this.summaryError = '';
+    this.summaryHtml = '';
   }
 
   selectCategory(category: string): void {

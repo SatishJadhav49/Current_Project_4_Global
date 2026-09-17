@@ -25,6 +25,10 @@ export interface DefectsData {
   Reported_Date?: string | Date | null;
 }
 
+export interface DefectsSummaryResponse {
+  summary?: string;
+}
+
 /** One audit occurrence - a source audited on a given date. */
 export interface AuditSourceGroup {
   key: string;

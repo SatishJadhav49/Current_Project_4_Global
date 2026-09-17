@@ -1,0 +1,120 @@
+/*
+ * Styling for the AI summary markdown. The content is injected with
+ * [innerHTML], so it does not carry this component's scoping attribute -
+ * ::ng-deep is required for these rules to reach it.
+ */
+:host ::ng-deep .ai-summary-content {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #374151;
+  word-break: break-word;
+}
+
+:host ::ng-deep .ai-summary-content > *:first-child {
+  margin-top: 0;
+}
+
+:host ::ng-deep .ai-summary-content > *:last-child {
+  margin-bottom: 0;
+}
+
+:host ::ng-deep .ai-summary-content h3,
+:host ::ng-deep .ai-summary-content h4,
+:host ::ng-deep .ai-summary-content h5,
+:host ::ng-deep .ai-summary-content h6 {
+  margin: 1.25rem 0 0.5rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.35;
+}
+
+:host ::ng-deep .ai-summary-content h3 {
+  font-size: 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+:host ::ng-deep .ai-summary-content h4 {
+  font-size: 0.9375rem;
+}
+
+:host ::ng-deep .ai-summary-content h5,
+:host ::ng-deep .ai-summary-content h6 {
+  font-size: 0.875rem;
+}
+
+:host ::ng-deep .ai-summary-content p {
+  margin: 0.6rem 0;
+}
+
+:host ::ng-deep .ai-summary-content ul,
+:host ::ng-deep .ai-summary-content ol {
+  margin: 0.6rem 0;
+  padding-left: 1.35rem;
+}
+
+:host ::ng-deep .ai-summary-content ul {
+  list-style: disc;
+}
+
+:host ::ng-deep .ai-summary-content ol {
+  list-style: decimal;
+}
+
+:host ::ng-deep .ai-summary-content li {
+  margin: 0.3rem 0;
+  padding-left: 0.15rem;
+}
+
+:host ::ng-deep .ai-summary-content li::marker {
+  color: #7c3aed;
+}
+
+:host ::ng-deep .ai-summary-content strong {
+  font-weight: 700;
+  color: #111827;
+}
+
+:host ::ng-deep .ai-summary-content em {
+  font-style: italic;
+}
+
+:host ::ng-deep .ai-summary-content code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  background: #f3f4f6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  color: #be123c;
+}
+
+:host ::ng-deep .ai-summary-content hr {
+  margin: 1rem 0;
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+:host ::ng-deep .ai-summary-content a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+:host ::ng-deep .ai-summary-content table {
+  width: 100%;
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+:host ::ng-deep .ai-summary-content th,
+:host ::ng-deep .ai-summary-content td {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+:host ::ng-deep .ai-summary-content th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #111827;
+}
