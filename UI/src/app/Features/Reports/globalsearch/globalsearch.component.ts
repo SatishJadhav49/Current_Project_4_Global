@@ -45,6 +45,14 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
 
   private readonly unknownSourceLabel = 'Unknown Source';
 
+  private readonly severityStyles: Record<string, string> = {
+    critical: 'bg-rose-100 text-rose-700 ring-1 ring-rose-200',
+    major: 'bg-amber-100 text-amber-800 ring-1 ring-amber-200',
+    minor: 'bg-sky-100 text-sky-700 ring-1 ring-sky-200',
+  };
+  private readonly defaultSeverityStyle =
+    'bg-gray-100 text-gray-700 ring-1 ring-gray-200';
+
   readonly reportsService = inject(ReportsService);
   readonly toastService = inject(ToastService);
 
@@ -134,29 +142,34 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Builds one row per audit occurrence - a source audited on a given date.
-   * Rows coming back without a problem description mean the audit was done
-   * and nothing was reported, so the source is counted with zero defects.
+   * Builds one row per audit source, carrying the latest reported date found
+   * for that source. Rows coming back without a problem description mean the
+   * audit was done and nothing was reported, so the source stays at zero
+   * defects.
    */
   private buildAuditSources(defects: DefectsData[]): AuditSourceGroup[] {
     const sourceMap = new Map<string, AuditSourceGroup>();
 
     defects.forEach((defect) => {
       const sourceName = defect.Audit_Type?.trim() || this.unknownSourceLabel;
-      const auditDate = defect.Reported_Date ?? null;
-      const key = `${sourceName}|${this.dateKey(auditDate)}`;
+      const key = sourceName.toLowerCase();
 
       let source = sourceMap.get(key);
       if (!source) {
         source = {
           key,
           sourceName,
-          auditDate,
+          auditDate: null,
           defects: [],
           defectCount: 0,
           hasDefects: false,
         };
         sourceMap.set(key, source);
+      }
+
+      const reportedDate = defect.Reported_Date ?? null;
+      if (this.dateValue(reportedDate) > this.dateValue(source.auditDate)) {
+        source.auditDate = reportedDate;
       }
 
       if (defect.Problem_Desc?.trim()) {
@@ -171,9 +184,10 @@ export class GlobalsearchComponent implements AfterViewInit, OnDestroy {
     );
   }
 
-  private dateKey(value: string | Date | null): string {
-    const time = this.dateValue(value);
-    return time ? time.toString() : '';
+  /** Severity badge colours - unknown severities fall back to neutral grey. */
+  severityClass(severity?: string): string {
+    const key = severity?.trim().toLowerCase() ?? '';
+    return this.severityStyles[key] ?? this.defaultSeverityStyle;
   }
 
   private dateValue(value: string | Date | null): number {
