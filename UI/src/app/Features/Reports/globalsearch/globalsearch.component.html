@@ -306,10 +306,10 @@
       No audit records found for this vehicle number.
     </div>
     } @if (hasAuditSources) {
-    <div class="grid gap-4 lg:grid-cols-5">
+    <div class="grid gap-4 lg:grid-cols-12">
       <!-- Left : Audit Sources -->
       <div
-        class="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-2"
+        class="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-3"
       >
         <div
           class="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3"
@@ -335,7 +335,10 @@
             [class.hover:bg-gray-50]="selectedSource?.key !== source.key"
           >
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-semibold text-gray-900">
+              <p
+                class="truncate text-sm font-semibold text-gray-900"
+                [title]="source.sourceName"
+              >
                 {{ source.sourceName }}
               </p>
               <p class="mt-0.5 text-xs text-gray-500">
@@ -396,7 +399,7 @@
 
       <!-- Right : Selected Source Defects -->
       <div
-        class="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-3"
+        class="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-9"
       >
         @if (!selectedSource) {
         <div
@@ -484,7 +487,7 @@
                 <th class="w-10 px-3 py-2.5 text-center text-xs font-semibold">
                   #
                 </th>
-                <th class="min-w-[18rem] px-3 py-2.5 text-xs font-semibold">
+                <th class="min-w-[14rem] px-3 py-2.5 text-xs font-semibold">
                   Problem Description
                 </th>
                 <th class="px-3 py-2.5 text-xs font-semibold">Severity</th>
