@@ -24,8 +24,8 @@ Build checks done on the dev machine (no SQL there):
 
 ### New: UI (`UI/src/app/Features/CorrelationModule/`)
 - `correlation.routes.ts`, `correlation.model.ts`, `correlation.service.ts`
-- `mapping-master/mapping-master.component.ts|html`: Screen 1 (Model, parameter list, Add/Edit/Delete/Map)
-- `parameter-mapping/parameter-mapping.component.ts|html`: Screen 2 (app tabs, master grid, Mapped panel)
+- `mapping-master/mapping-master.component.ts|html`: Screen 1 (Model, stats, parameter list, New/Rename dialog, Delete, Map)
+- `parameter-mapping/parameter-mapping.component.ts|html`: Screen 2 (app tabs; one grid per app with **mapped rows pinned on top**, map/unmap from the same grid)
 
 ### Edited: shared files (small additions only)
 | File | Change |
@@ -52,9 +52,10 @@ Build checks done on the dev machine (no SQL there):
 - [ ] The same name **is** allowed in a different model
 - [ ] Edit / Delete work (delete also removes that parameter's mappings)
 - [ ] Map: every tab (1D BIW, 1D TCF, Torque, EST, GD) loads data for the selected model
-- [ ] Select rows → Map Selected; the rows turn green ("Mapped") and appear in the right panel
-- [ ] A leaf mapped to another parameter shows "Also in other" (hover for names) and can still be mapped
-- [ ] Unmap (single + multi-select) makes the row selectable again
+- [ ] Select available rows → "Map N to parameter"; the rows move to the **Mapped** section at the top of the list
+- [ ] The All / Mapped / Unmapped switch and the column Filters work
+- [ ] A leaf mapped to another parameter shows "+ other" (hover for names) and can still be mapped
+- [ ] Unmap via the ✕ on a row, or select mapped rows → "Unmap N"; the row returns to Available
 - [ ] Back to the list → mapped counts per app are shown
 
 ## 4. Assumptions to verify on the real DB

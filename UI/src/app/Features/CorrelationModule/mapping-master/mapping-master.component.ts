@@ -1,4 +1,11 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -23,7 +30,7 @@ export class MappingMasterComponent implements OnInit {
   parametersLoading = false;
   searchText = '';
 
-  // Add / edit form - editingId 0 means a new parameter
+  // Add / edit dialog - editingId 0 means a new parameter
   formOpen = false;
   editingId = 0;
   parameterName = '';
@@ -41,6 +48,13 @@ export class MappingMasterComponent implements OnInit {
     this.loadModels();
   }
 
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.formOpen && !this.saving) {
+      this.closeForm();
+    }
+  }
+
   get filteredParameters(): CrParameter[] {
     const search = this.searchText.trim().toLowerCase();
     if (!search) return this.parameters;
@@ -54,6 +68,18 @@ export class MappingMasterComponent implements OnInit {
     return (
       this.models.find((model) => model.Model_ID === this.selectedModelId)
         ?.Model_Name ?? ''
+    );
+  }
+
+  get mappedParameterCount(): number {
+    return this.parameters.filter((parameter) => parameter.Total_Mapped > 0)
+      .length;
+  }
+
+  get totalMappedItems(): number {
+    return this.parameters.reduce(
+      (total, parameter) => total + parameter.Total_Mapped,
+      0
     );
   }
 
@@ -136,7 +162,7 @@ export class MappingMasterComponent implements OnInit {
   saveParameter(): void {
     const name = this.parameterName.trim();
 
-    if (!this.selectedModelId) return;
+    if (!this.selectedModelId || this.saving) return;
 
     if (!name) {
       this.toastService.showWarning('Name Required', 'Please enter a parameter name.');
@@ -207,9 +233,6 @@ export class MappingMasterComponent implements OnInit {
             next: (result) => {
               if (result?.Is_Success) {
                 this.toastService.showSuccess('Deleted', result.Message ?? 'Parameter deleted.');
-                if (this.editingId === parameter.CR_Parameter_ID) {
-                  this.closeForm();
-                }
                 this.loadParameters();
               } else {
                 this.toastService.showWarning(

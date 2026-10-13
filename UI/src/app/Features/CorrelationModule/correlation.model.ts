@@ -109,11 +109,3 @@ export interface CrResult {
   Skipped_Count: number;
   Is_Success: boolean;
 }
-
-/** Mapped items of one application - for the "Mapped" panel. */
-export interface CrMappingGroup {
-  appId: number;
-  appName: string;
-  leafLevelName: string;
-  mappings: CrMapping[];
-}

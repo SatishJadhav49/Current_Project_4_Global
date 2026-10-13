@@ -8,11 +8,12 @@ import {
   CrApplication,
   CrApplicationColumn,
   CrMapping,
-  CrMappingGroup,
   CrMasterRow,
   CrParameter,
 } from '../correlation.model';
 import { ConfirmationService, ToastService } from '../../../services';
+
+type ViewFilter = 'all' | 'mapped' | 'unmapped';
 
 @Component({
   selector: 'app-parameter-mapping',
@@ -40,18 +41,23 @@ export class ParameterMappingComponent implements OnInit {
   // Grid filters / selection / paging
   searchText = '';
   columnFilters: Record<string, string> = {};
-  showUnmappedOnly = false;
+  showColumnFilters = false;
+  viewFilter: ViewFilter = 'all';
   selectedLeafKeys = new Set<string>();
   page = 1;
   readonly pageSize = 50;
-  mapping = false;
+  saving = false;
 
-  // Mapped panel
+  readonly viewFilters: { value: ViewFilter; label: string }[] = [
+    { value: 'all', label: 'All' },
+    { value: 'mapped', label: 'Mapped' },
+    { value: 'unmapped', label: 'Unmapped' },
+  ];
+
+  // Mappings of this parameter - source of truth for the "mapped" state
   mappings: CrMapping[] = [];
-  mappedGroups: CrMappingGroup[] = [];
-  mappedCountByApp = new Map<number, number>();
-  selectedMappingIds = new Set<number>();
-  unmapping = false;
+  private mappingByKey = new Map<string, CrMapping>();
+  private mappedCountByApp = new Map<number, number>();
 
   private readonly correlationService = inject(CorrelationService);
   private readonly toastService = inject(ToastService);
@@ -118,7 +124,7 @@ export class ParameterMappingComponent implements OnInit {
     this.selectedApp = app;
     this.searchText = '';
     this.columnFilters = {};
-    this.showUnmappedOnly = false;
+    this.viewFilter = 'all';
     this.selectedLeafKeys.clear();
     this.page = 1;
 
@@ -171,14 +177,48 @@ export class ParameterMappingComponent implements OnInit {
     return this.selectedApp?.Columns ?? [];
   }
 
+  get filterableColumnCount(): number {
+    return this.columns.filter((column) => column.Is_Filterable).length;
+  }
+
+  /**
+   * Mapped items whose source row no longer comes back from the application
+   * (deactivated / deleted at source). Shown so they can still be unmapped.
+   */
+  private get orphanRows(): CrMasterRow[] {
+    const app = this.selectedApp;
+    if (!app) return [];
+
+    const present = new Set(this.rows.map((row) => this.leafKey(row)));
+    return this.mappings
+      .filter(
+        (mapping) =>
+          mapping.App_ID === app.App_ID &&
+          !present.has(String(mapping.Source_Leaf_ID))
+      )
+      .map((mapping) => ({
+        Leaf_ID: mapping.Source_Leaf_ID,
+        Display_Text: mapping.Source_Display_Text,
+        Is_Orphan: true,
+      }));
+  }
+
+  /** Filters the grid and keeps mapped rows on top (original order otherwise). */
   applyFilters(): void {
     const search = this.searchText.trim().toLowerCase();
     const activeFilters = Object.entries(this.columnFilters)
       .map(([key, value]) => [key, (value ?? '').trim().toLowerCase()])
       .filter(([, value]) => !!value);
 
-    this.filteredRows = this.rows.filter((row) => {
-      if (this.showUnmappedOnly && this.isMapped(row)) return false;
+    const matches = (row: CrMasterRow): boolean => {
+      const mapped = this.isMapped(row);
+      if (this.viewFilter === 'mapped' && !mapped) return false;
+      if (this.viewFilter === 'unmapped' && mapped) return false;
+
+      if (this.isOrphan(row)) {
+        const text = this.cellValue(row, 'Display_Text').toLowerCase();
+        return !activeFilters.length && (!search || text.includes(search));
+      }
 
       for (const [key, value] of activeFilters) {
         if (!this.cellValue(row, key).toLowerCase().includes(value)) {
@@ -193,17 +233,35 @@ export class ParameterMappingComponent implements OnInit {
       }
 
       return true;
-    });
+    };
+
+    const visible = [...this.orphanRows, ...this.rows].filter(matches);
+    this.filteredRows = [
+      ...visible.filter((row) => this.isMapped(row)),
+      ...visible.filter((row) => !this.isMapped(row)),
+    ];
 
     if (this.page > this.totalPages) {
       this.page = this.totalPages;
     }
   }
 
+  setViewFilter(filter: ViewFilter): void {
+    if (this.viewFilter === filter) return;
+    this.viewFilter = filter;
+    this.page = 1;
+    this.applyFilters();
+  }
+
+  onFilterChange(): void {
+    this.page = 1;
+    this.applyFilters();
+  }
+
   clearFilters(): void {
     this.searchText = '';
     this.columnFilters = {};
-    this.showUnmappedOnly = false;
+    this.viewFilter = 'all';
     this.page = 1;
     this.applyFilters();
   }
@@ -211,10 +269,17 @@ export class ParameterMappingComponent implements OnInit {
   get hasActiveFilters(): boolean {
     return (
       !!this.searchText.trim() ||
-      this.showUnmappedOnly ||
+      this.viewFilter !== 'all' ||
       Object.values(this.columnFilters).some((value) => !!value?.trim())
     );
   }
+
+  get activeColumnFilterCount(): number {
+    return Object.values(this.columnFilters).filter((value) => !!value?.trim())
+      .length;
+  }
+
+  //*************************************** Row helpers ***************************************//
 
   cellValue(row: CrMasterRow, key: string): string {
     const value = row[key];
@@ -225,12 +290,48 @@ export class ParameterMappingComponent implements OnInit {
     return this.cellValue(row, 'Leaf_ID');
   }
 
+  private mappingKey(appId: number, leafKey: string): string {
+    return `${appId}|${leafKey}`;
+  }
+
+  mappingOf(row: CrMasterRow): CrMapping | undefined {
+    if (!this.selectedApp) return undefined;
+    return this.mappingByKey.get(
+      this.mappingKey(this.selectedApp.App_ID, this.leafKey(row))
+    );
+  }
+
   isMapped(row: CrMasterRow): boolean {
-    return row['Is_Mapped'] === true;
+    return !!this.mappingOf(row);
+  }
+
+  isOrphan(row: CrMasterRow): boolean {
+    return row['Is_Orphan'] === true;
   }
 
   otherParameters(row: CrMasterRow): string {
     return this.cellValue(row, 'Other_Parameters');
+  }
+
+  /** Section label shown above the first mapped / first available row of a page. */
+  sectionLabel(index: number): string {
+    const rows = this.pagedRows;
+    const mapped = this.isMapped(rows[index]);
+
+    if (index > 0 && this.isMapped(rows[index - 1]) === mapped) return '';
+    return mapped ? 'Mapped' : 'Available';
+  }
+
+  get selectedAppMappedCount(): number {
+    return this.selectedApp ? this.mappedCount(this.selectedApp.App_ID) : 0;
+  }
+
+  get selectedAppAvailableCount(): number {
+    return this.rows.filter((row) => !this.isMapped(row)).length;
+  }
+
+  mappedCount(appId: number): number {
+    return this.mappedCountByApp.get(appId) ?? 0;
   }
 
   //*************************************** Paging ***************************************//
@@ -259,8 +360,6 @@ export class ParameterMappingComponent implements OnInit {
   //*************************************** Selection ***************************************//
 
   toggleRow(row: CrMasterRow): void {
-    if (this.isMapped(row)) return;
-
     const key = this.leafKey(row);
     if (this.selectedLeafKeys.has(key)) {
       this.selectedLeafKeys.delete(key);
@@ -273,44 +372,56 @@ export class ParameterMappingComponent implements OnInit {
     return this.selectedLeafKeys.has(this.leafKey(row));
   }
 
-  /** Select-all works on every filtered row that is not mapped yet. */
-  private get selectableRows(): CrMasterRow[] {
-    return this.filteredRows.filter((row) => !this.isMapped(row));
+  /**
+   * Header checkbox works on one kind of row only, so a bulk action never
+   * mixes map and unmap: mapped rows in the "Mapped" view, otherwise available rows.
+   */
+  private get bulkSelectableRows(): CrMasterRow[] {
+    const wantMapped = this.viewFilter === 'mapped';
+    return this.filteredRows.filter((row) => this.isMapped(row) === wantMapped);
   }
 
-  get allFilteredSelected(): boolean {
-    const selectable = this.selectableRows;
-    return (
-      selectable.length > 0 &&
-      selectable.every((row) => this.selectedLeafKeys.has(this.leafKey(row)))
-    );
+  get allSelected(): boolean {
+    const rows = this.bulkSelectableRows;
+    return rows.length > 0 && rows.every((row) => this.isSelected(row));
   }
 
   toggleSelectAll(): void {
-    const selectable = this.selectableRows;
-
-    if (this.allFilteredSelected) {
-      selectable.forEach((row) => this.selectedLeafKeys.delete(this.leafKey(row)));
-    } else {
-      selectable.forEach((row) => this.selectedLeafKeys.add(this.leafKey(row)));
-    }
+    const rows = this.bulkSelectableRows;
+    const select = !this.allSelected;
+    rows.forEach((row) =>
+      select
+        ? this.selectedLeafKeys.add(this.leafKey(row))
+        : this.selectedLeafKeys.delete(this.leafKey(row))
+    );
   }
 
   clearSelection(): void {
     this.selectedLeafKeys.clear();
   }
 
-  //*************************************** Map ***************************************//
+  private get selectedRows(): CrMasterRow[] {
+    return [...this.orphanRows, ...this.rows].filter((row) =>
+      this.selectedLeafKeys.has(this.leafKey(row))
+    );
+  }
+
+  get selectedToMapCount(): number {
+    return this.selectedRows.filter((row) => !this.isMapped(row)).length;
+  }
+
+  get selectedToUnmapCount(): number {
+    return this.selectedRows.filter((row) => this.isMapped(row)).length;
+  }
+
+  //*************************************** Map / Unmap ***************************************//
 
   mapSelected(): void {
     const app = this.selectedApp;
-    if (!app || !this.selectedLeafKeys.size || this.mapping) return;
+    const rowsToMap = this.selectedRows.filter((row) => !this.isMapped(row));
+    if (!app || !rowsToMap.length || this.saving) return;
 
-    const selectedRows = this.rows.filter((row) =>
-      this.selectedLeafKeys.has(this.leafKey(row))
-    );
-
-    const items = selectedRows.map((row) => ({
+    const items = rowsToMap.map((row) => ({
       Leaf_ID: Number(row['Leaf_ID']),
       Source_Model_ID:
         row['Source_Model_ID'] === null || row['Source_Model_ID'] === undefined
@@ -320,7 +431,7 @@ export class ParameterMappingComponent implements OnInit {
         this.cellValue(row, 'Display_Text') || this.cellValue(row, 'Leaf_Name'),
     }));
 
-    this.mapping = true;
+    this.saving = true;
     this.correlationService
       .saveMappings({
         CR_Parameter_ID: this.parameterId,
@@ -329,9 +440,8 @@ export class ParameterMappingComponent implements OnInit {
       })
       .subscribe({
         next: (result) => {
-          this.mapping = false;
-
           if (!result?.Is_Success) {
+            this.saving = false;
             this.toastService.showWarning(
               'Not Mapped',
               result?.Message ?? 'Unable to map the selected rows.'
@@ -340,127 +450,98 @@ export class ParameterMappingComponent implements OnInit {
           }
 
           this.toastService.showSuccess('Mapped', result.Message ?? 'Mapped successfully.');
-
-          // Flag rows locally - no need to reload the whole master data
-          selectedRows.forEach((row) => (row['Is_Mapped'] = true));
-          this.selectedLeafKeys.clear();
-          this.applyFilters();
+          rowsToMap.forEach((row) => this.selectedLeafKeys.delete(this.leafKey(row)));
           this.reloadMappings();
         },
         error: () => {
-          this.mapping = false;
+          this.saving = false;
         },
       });
   }
 
-  //*************************************** Mapped panel / Unmap ***************************************//
+  unmapRow(row: CrMasterRow): void {
+    const mapping = this.mappingOf(row);
+    if (!mapping) return;
 
-  private reloadMappings(): void {
-    this.correlationService.getParameterMappings(this.parameterId).subscribe({
-      next: (details) => this.setMappings(details?.Mappings ?? []),
-    });
-  }
-
-  private setMappings(mappings: CrMapping[]): void {
-    this.mappings = mappings;
-    this.selectedMappingIds.clear();
-
-    const groups = new Map<number, CrMappingGroup>();
-    mappings.forEach((mapping) => {
-      let group = groups.get(mapping.App_ID);
-      if (!group) {
-        group = {
-          appId: mapping.App_ID,
-          appName: mapping.App_Name ?? '',
-          leafLevelName: mapping.Leaf_Level_Name ?? '',
-          mappings: [],
-        };
-        groups.set(mapping.App_ID, group);
-      }
-      group.mappings.push(mapping);
-    });
-
-    // Same order as the tabs
-    const order = new Map(this.applications.map((app, index) => [app.App_ID, index]));
-    this.mappedGroups = Array.from(groups.values()).sort(
-      (a, b) => (order.get(a.appId) ?? 999) - (order.get(b.appId) ?? 999)
+    this.confirmUnmap(
+      [mapping],
+      mapping.Source_Display_Text || this.cellValue(row, 'Leaf_Name')
     );
-
-    this.mappedCountByApp = new Map(
-      this.mappedGroups.map((group) => [group.appId, group.mappings.length])
-    );
-  }
-
-  mappedCount(appId: number): number {
-    return this.mappedCountByApp.get(appId) ?? 0;
-  }
-
-  toggleMappingSelection(mappingId: number): void {
-    if (this.selectedMappingIds.has(mappingId)) {
-      this.selectedMappingIds.delete(mappingId);
-    } else {
-      this.selectedMappingIds.add(mappingId);
-    }
-  }
-
-  unmapOne(mapping: CrMapping): void {
-    this.confirmUnmap([mapping], mapping.Source_Display_Text);
   }
 
   unmapSelected(): void {
-    const selected = this.mappings.filter((mapping) =>
-      this.selectedMappingIds.has(mapping.Mapping_ID)
-    );
-    if (!selected.length) return;
+    const targets = this.selectedRows
+      .map((row) => this.mappingOf(row))
+      .filter((mapping): mapping is CrMapping => !!mapping);
+    if (!targets.length) return;
 
-    this.confirmUnmap(selected, `${selected.length} selected item(s)`);
+    this.confirmUnmap(targets, `${targets.length} selected item(s)`);
   }
 
   private confirmUnmap(targets: CrMapping[], itemName?: string): void {
-    if (this.unmapping) return;
+    if (this.saving) return;
 
     this.confirmationService
       .confirmDelete(
         'Unmap',
-        'Are you sure you want to unmap from this parameter?',
+        'Remove the mapping from this parameter?',
         itemName,
         'Unmap'
       )
       .then((confirmed) => {
         if (!confirmed) return;
 
-        this.unmapping = true;
+        this.saving = true;
         this.correlationService
           .unmap({ Mapping_IDs: targets.map((mapping) => mapping.Mapping_ID) })
           .subscribe({
             next: (result) => {
-              this.unmapping = false;
-
               if (result?.Is_Success) {
                 this.toastService.showSuccess('Unmapped', result.Message ?? 'Unmapped successfully.');
               } else {
                 this.toastService.showWarning('Unmap', result?.Message ?? 'Nothing was unmapped.');
               }
 
-              this.clearMappedFlags(targets);
+              targets.forEach((mapping) =>
+                this.selectedLeafKeys.delete(String(mapping.Source_Leaf_ID))
+              );
               this.reloadMappings();
             },
             error: () => {
-              this.unmapping = false;
+              this.saving = false;
             },
           });
       });
   }
 
-  /** Makes unmapped rows selectable again in any cached master data. */
-  private clearMappedFlags(targets: CrMapping[]): void {
-    targets.forEach((mapping) => {
-      const rows = this.masterCache.get(mapping.App_ID);
-      const leafKey = String(mapping.Source_Leaf_ID);
-      rows
-        ?.filter((row) => this.leafKey(row) === leafKey)
-        .forEach((row) => (row['Is_Mapped'] = false));
+  private reloadMappings(): void {
+    this.correlationService.getParameterMappings(this.parameterId).subscribe({
+      next: (details) => {
+        this.setMappings(details?.Mappings ?? []);
+        this.saving = false;
+      },
+      error: () => {
+        this.saving = false;
+      },
     });
+  }
+
+  private setMappings(mappings: CrMapping[]): void {
+    this.mappings = mappings;
+    this.mappingByKey = new Map(
+      mappings.map((mapping) => [
+        this.mappingKey(mapping.App_ID, String(mapping.Source_Leaf_ID)),
+        mapping,
+      ])
+    );
+
+    this.mappedCountByApp = new Map();
+    mappings.forEach((mapping) =>
+      this.mappedCountByApp.set(
+        mapping.App_ID,
+        (this.mappedCountByApp.get(mapping.App_ID) ?? 0) + 1
+      )
+    );
 
     this.applyFilters();
   }
