@@ -33,6 +33,14 @@ export const routes: Routes = [
       import('./Features/Reports/reports.routes').then((m) => m.ReportsRoutes),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'correlation',
+    loadChildren: () =>
+      import('./Features/CorrelationModule/correlation.routes').then(
+        (m) => m.CorrelationRoutes
+      ),
+    canActivate: [AuthGuard],
+  },
   //Wildcard route - must be last
   { path: '**', component: PlaceholderComponent },
 ];

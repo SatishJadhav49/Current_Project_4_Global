@@ -198,9 +198,9 @@ export class MenuService {
       let actionPath = url.pathname.toLowerCase();
 
       // Remove known prefix if present (e.g., /pqlsp/)
-      let knownPrefix = '/pqlsp/';
+      let knownPrefix = '/pqgsearch/';
       if (this.appConfig.apiPort == '443') {
-        knownPrefix = '/pqlsp/portal/';
+        knownPrefix = '/pqgsearch/portal/';
       }
       if (actionPath.startsWith(knownPrefix)) {
         actionPath = actionPath.slice(knownPrefix.length);

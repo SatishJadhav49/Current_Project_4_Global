@@ -34,6 +34,8 @@ builder.Services.AddScoped<MM_User_RolesDataService>();
 builder.Services.AddScoped<MM_CommonDataService>();
 builder.Services.AddScoped<MM_Documents_MasterDataService>();
 builder.Services.AddScoped<MM_Global_SearchDataService>();
+// Correlation Module - Parameter Mapping Master
+builder.Services.AddScoped<API_PQ_Global_Reporting.CorrelationModule.Data.MM_CR_MappingDataService>();
 
 builder.Services.AddScoped<MailNotificationService>();
 // Register Utils Services

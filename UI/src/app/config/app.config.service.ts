@@ -7,15 +7,13 @@ export class AppConfig {
   public apiPort: String = '5000';
 
   // For Live
-  // public apiPort: String = '2448';
   // public apiPort: String = '443';
 
 
   // Python AI service (defect summary)
   public aiApiPath: String = 'http://localhost:8000/service/';
 
-  // For Live
-  // public aiApiPath: String = 'http://<ai-server>:8000/service/';
+
 
   public apiProtocol?: String;
   public apiHostName?: String;
@@ -35,7 +33,7 @@ export class AppConfig {
       this.apiPort = window.location.port;
     }
     this.baseApiPath =
-      this.apiProtocol + '//' + this.apiHostName + ':' + this.apiPort + (this.apiPort=='443' ? '/PQLSP/api/' : '/api/');
+      this.apiProtocol + '//' + this.apiHostName + ':' + this.apiPort + (this.apiPort=='443' ? '/PQGSearch/api/' : '/api/');
     if (!this.locale) {
       this.locale = navigator.language;
     }
