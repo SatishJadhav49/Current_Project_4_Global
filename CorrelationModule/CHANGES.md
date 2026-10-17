@@ -87,10 +87,9 @@ EXEC dbo.SP_CR_Get_Master_1D_BIW @Model_Name = N'<your model name>';
 A 1D location measured for both Gap and Flush now appears as **two rows**, and each row is mapped separately.
 A mapping is identified by `Source_Leaf_ID` + new column `Source_Leaf_Type` (`Gap` / `Flush`; NULL for other apps).
 
-**On a database that already has 01–05 installed, run in this order:**
-1. `06_Upgrade_Gap_Flush_Split.sql`: adds the column, rebuilds the 2 indexes, converts existing 1D mappings, and recreates the `MM_CR_LeafList` type
-2. `03_SPs_Mapping.sql` (re-run)
-3. `04_SPs_Master_Data.sql` (re-run)
+**On a database that already has 01–05 installed:** run only `06_Upgrade_Gap_Flush_Split.sql`, the **whole file** (F5 with nothing selected).
+It is self-contained: it adds the column, rebuilds the indexes, converts existing 1D mappings, recreates the `MM_CR_LeafList` type, **and recreates the affected stored procedures** (`SP_CR_Save_Mappings`, `SP_CR_Get_Leaf_Mappings`, `SP_CR_Get_Parameter_Mappings`, `SP_CR_Get_Master_1D_BIW`, `SP_CR_Get_Master_1D_TCF`).
+The last result grid is a verification list, and every row must show **OK**.
 
 Existing 1D mappings are kept: Gap-only becomes Gap, Flush-only becomes Flush, and a Gap + Flush location becomes **both** mappings.
 A fresh install only needs 01–05, which already include this change.
