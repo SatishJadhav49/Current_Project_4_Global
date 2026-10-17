@@ -189,6 +189,7 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                         Leaf_Level_Name = reader["Leaf_Level_Name"]?.ToString(),
                         Source_Model_ID = reader["Source_Model_ID"] != DBNull.Value ? Convert.ToDecimal(reader["Source_Model_ID"]) : null,
                         Source_Leaf_ID = Convert.ToDecimal(reader["Source_Leaf_ID"]),
+                        Source_Leaf_Type = NormalizeLeafType(reader["Source_Leaf_Type"]),
                         Source_Display_Text = reader["Source_Display_Text"]?.ToString(),
                         Inserted_Date = ToNullableDate(reader["Inserted_Date"]),
                         Mapped_By = reader["Mapped_By"]?.ToString()
@@ -236,9 +237,9 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
 
             if (string.IsNullOrWhiteSpace(masterSpName)) return null;
 
-            // 3. Existing mappings of this application within the model
-            var mappedHere = new HashSet<decimal>();
-            var otherParameters = new Dictionary<decimal, List<string>>();
+            // 3. Existing mappings of this application within the model (keyed by leaf ID + type)
+            var mappedHere = new HashSet<string>();
+            var otherParameters = new Dictionary<string, List<string>>();
             using (var command = CreateSpCommand("SP_CR_Get_Leaf_Mappings", connection))
             {
                 command.Parameters.Add(new SqlParameter("@App_ID", appId));
@@ -247,17 +248,17 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                 using var reader = await command.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
-                    var leafId = Convert.ToDecimal(reader["Source_Leaf_ID"]);
+                    var leafKey = LeafKey(reader["Source_Leaf_ID"], reader["Source_Leaf_Type"]);
                     if (Convert.ToInt32(reader["CR_Parameter_ID"]) == crParameterId)
                     {
-                        mappedHere.Add(leafId);
+                        mappedHere.Add(leafKey);
                         continue;
                     }
 
-                    if (!otherParameters.TryGetValue(leafId, out var names))
+                    if (!otherParameters.TryGetValue(leafKey, out var names))
                     {
                         names = new List<string>();
-                        otherParameters[leafId] = names;
+                        otherParameters[leafKey] = names;
                     }
                     names.Add(reader["Parameter_Name"]?.ToString() ?? string.Empty);
                 }
@@ -278,12 +279,15 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                         row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
                     }
 
-                    var leafId = row.TryGetValue("Leaf_ID", out var leaf) && leaf != null
-                        ? Convert.ToDecimal(leaf)
-                        : 0;
+                    if (!row.ContainsKey("Leaf_Type"))
+                    {
+                        row["Leaf_Type"] = null;
+                    }
 
-                    row["Is_Mapped"] = mappedHere.Contains(leafId);
-                    row["Other_Parameters"] = otherParameters.TryGetValue(leafId, out var names)
+                    var leafKey = LeafKey(row.GetValueOrDefault("Leaf_ID"), row["Leaf_Type"]);
+
+                    row["Is_Mapped"] = mappedHere.Contains(leafKey);
+                    row["Other_Parameters"] = otherParameters.TryGetValue(leafKey, out var names)
                         ? string.Join(", ", names)
                         : string.Empty;
 
@@ -297,14 +301,18 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
         public async Task<MM_CR_ResultDto> SaveMappings(MM_CR_MappingSaveDto mapping)
         {
             var leaves = new DataTable();
+            // Column order must match dbo.MM_CR_LeafList
             leaves.Columns.Add("Source_Leaf_ID", typeof(decimal));
+            leaves.Columns.Add("Source_Leaf_Type", typeof(string));
             leaves.Columns.Add("Source_Model_ID", typeof(decimal));
             leaves.Columns.Add("Source_Display_Text", typeof(string));
 
             foreach (var item in mapping.Items)
             {
+                var leafType = NormalizeLeafType(item.Leaf_Type);
                 leaves.Rows.Add(
                     item.Leaf_ID,
+                    leafType != null ? Truncate(leafType, 20) : DBNull.Value,
                     item.Source_Model_ID.HasValue ? item.Source_Model_ID.Value : DBNull.Value,
                     string.IsNullOrWhiteSpace(item.Display_Text) ? DBNull.Value : Truncate(item.Display_Text, 1000)
                 );
@@ -382,6 +390,20 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                 Inserted_Count = ReadInt("Inserted_Count"),
                 Skipped_Count = ReadInt("Skipped_Count")
             };
+        }
+
+        /// <summary>A leaf is identified by its ID plus optional type (e.g. Gap / Flush).</summary>
+        private static string LeafKey(object? leafId, object? leafType)
+        {
+            var id = leafId == null || leafId == DBNull.Value ? 0 : Convert.ToDecimal(leafId);
+            return $"{id}|{NormalizeLeafType(leafType)?.ToUpperInvariant()}";
+        }
+
+        private static string? NormalizeLeafType(object? value)
+        {
+            if (value == null || value == DBNull.Value) return null;
+            var text = value.ToString()?.Trim();
+            return string.IsNullOrEmpty(text) ? null : text;
         }
 
         private static DateTime? ToNullableDate(object value)

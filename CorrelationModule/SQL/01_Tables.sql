@@ -105,6 +105,7 @@ BEGIN
         App_ID              INT               NOT NULL,
         Source_Model_ID     DECIMAL(18,0)     NULL,       -- Model_ID inside the source application DB
         Source_Leaf_ID      DECIMAL(18,0)     NOT NULL,   -- Location_ID / Parameter_ID in source DB
+        Source_Leaf_Type    NVARCHAR(20)      NULL,       -- sub-type of the leaf, e.g. Gap / Flush for 1D (NULL when not applicable)
         Source_Display_Text NVARCHAR(1000)    NULL,       -- snapshot e.g. Area > Part > Checkpoint > Location
         Is_Active           BIT               NOT NULL CONSTRAINT DF_MM_CR_Mapping_Active DEFAULT (1),
         Inserted_User_ID    DECIMAL(18,0)     NULL,
@@ -120,18 +121,18 @@ BEGIN
 END
 GO
 
--- No duplicate active mapping of the same leaf to the same parameter.
+-- No duplicate active mapping of the same leaf (+ type) to the same parameter.
 -- (One leaf CAN be mapped to several different parameters.)
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_MM_CR_Mapping_Active' AND object_id = OBJECT_ID(N'dbo.MM_CR_Parameter_Mapping'))
     CREATE UNIQUE NONCLUSTERED INDEX UX_MM_CR_Mapping_Active
-        ON dbo.MM_CR_Parameter_Mapping (CR_Parameter_ID, App_ID, Source_Leaf_ID)
+        ON dbo.MM_CR_Parameter_Mapping (CR_Parameter_ID, App_ID, Source_Leaf_ID, Source_Leaf_Type)
         WHERE Is_Active = 1;
 GO
 
 -- Reverse lookup (leaf -> parameters), used for flags now and for readings in Phase 2
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_MM_CR_Mapping_App_Leaf' AND object_id = OBJECT_ID(N'dbo.MM_CR_Parameter_Mapping'))
     CREATE NONCLUSTERED INDEX IX_MM_CR_Mapping_App_Leaf
-        ON dbo.MM_CR_Parameter_Mapping (App_ID, Source_Leaf_ID)
+        ON dbo.MM_CR_Parameter_Mapping (App_ID, Source_Leaf_ID, Source_Leaf_Type)
         INCLUDE (CR_Parameter_ID)
         WHERE Is_Active = 1;
 GO
@@ -143,6 +144,7 @@ IF TYPE_ID(N'dbo.MM_CR_LeafList') IS NULL
     CREATE TYPE dbo.MM_CR_LeafList AS TABLE
     (
         Source_Leaf_ID      DECIMAL(18,0)  NOT NULL,
+        Source_Leaf_Type    NVARCHAR(20)   NULL,
         Source_Model_ID     DECIMAL(18,0)  NULL,
         Source_Display_Text NVARCHAR(1000) NULL
     );

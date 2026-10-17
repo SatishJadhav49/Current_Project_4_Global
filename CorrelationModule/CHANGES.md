@@ -15,6 +15,7 @@ Build checks done on the dev machine (no SQL there):
 | `02_Seed_Applications.sql` | 5 apps (1D BIW, 1D TCF, Torque, EST, GD) + their grid columns |
 | `03_SPs_Mapping.sql` | `SP_CR_Get_Models`, `SP_CR_Get_Applications`, `SP_CR_Get_Parameters`, `SP_CR_Save_Parameter`, `SP_CR_Delete_Parameter`, `SP_CR_Get_Parameter_Mappings`, `SP_CR_Get_Application_Master_SP`, `SP_CR_Get_Leaf_Mappings`, `SP_CR_Save_Mappings`, `SP_CR_Unmap` |
 | `04_SPs_Master_Data.sql` | `SP_CR_Get_Master_1D_BIW`, `_1D_TCF`, `_Torque`, `_EST`, `_GD` (from `query.sql`) |
+| `06_Upgrade_Gap_Flush_Split.sql` | **Upgrade only** (DB already on 01–05): separate Gap / Flush rows for 1D. See section 6 |
 | `05_Menu_Insert.sql` | Adds the **Mapping Master** submenu (`correlation/mapping-master`) under the Masters menu |
 
 ### New: API (`API_PQ_Global_Reporting/CorrelationModule/`)
@@ -78,3 +79,24 @@ EXEC dbo.SP_CR_Get_Master_1D_BIW @Model_Name = N'<your model name>';
 1. Create `SP_CR_Get_Master_CMM @Model_Name` returning `Leaf_ID, Leaf_Name, Source_Model_ID, Display_Text` + display columns.
 2. Add the app row and its columns to `02_Seed_Applications.sql` and re-run it.
 3. The new tab appears automatically.
+
+---
+
+## 6. Update 2026-10-17: Gap / Flush shown as separate rows (1D BIW / 1D TCF)
+
+A 1D location measured for both Gap and Flush now appears as **two rows**, and each row is mapped separately.
+A mapping is identified by `Source_Leaf_ID` + new column `Source_Leaf_Type` (`Gap` / `Flush`; NULL for other apps).
+
+**On a database that already has 01–05 installed, run in this order:**
+1. `06_Upgrade_Gap_Flush_Split.sql`: adds the column, rebuilds the 2 indexes, converts existing 1D mappings, and recreates the `MM_CR_LeafList` type
+2. `03_SPs_Mapping.sql` (re-run)
+3. `04_SPs_Master_Data.sql` (re-run)
+
+Existing 1D mappings are kept: Gap-only becomes Gap, Flush-only becomes Flush, and a Gap + Flush location becomes **both** mappings.
+A fresh install only needs 01–05, which already include this change.
+
+**Code files changed:**
+- API: `CorrelationModule/Models/MM_CR_MappingDtos.cs`, `CorrelationModule/Data/MM_CR_MappingDataService.cs`
+- UI: `correlation.model.ts`, `parameter-mapping/parameter-mapping.component.ts`
+
+**Check:** for a location with both measures, open 1D BIW. You should see 2 rows (Gap, Flush). Map only Gap and confirm Flush stays Available.

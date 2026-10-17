@@ -68,6 +68,7 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Models
         public string? Leaf_Level_Name { get; set; }
         public decimal? Source_Model_ID { get; set; }
         public decimal Source_Leaf_ID { get; set; }
+        public string? Source_Leaf_Type { get; set; }
         public string? Source_Display_Text { get; set; }
         public DateTime? Inserted_Date { get; set; }
         public string? Mapped_By { get; set; }
@@ -92,6 +93,8 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Models
     public class MM_CR_LeafItemDto
     {
         public decimal Leaf_ID { get; set; }
+        /// <summary>Optional sub-type of the leaf, e.g. Gap / Flush for 1D.</summary>
+        public string? Leaf_Type { get; set; }
         public decimal? Source_Model_ID { get; set; }
         public string? Display_Text { get; set; }
     }

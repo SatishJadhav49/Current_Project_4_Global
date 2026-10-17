@@ -10,6 +10,9 @@
               (Model_IDs differ per application, so each SP resolves its own
                Model_ID(s) from its own MM_Model by name)
      Output : Leaf_ID          - ID stored in MM_CR_Parameter_Mapping.Source_Leaf_ID
+              Leaf_Type        - OPTIONAL sub-type stored in Source_Leaf_Type when one
+                                 leaf produces several rows (1D: Gap / Flush).
+                                 A leaf is identified by Leaf_ID + Leaf_Type.
               Leaf_Name        - leaf display name
               Source_Model_ID  - Model_ID inside the source application
               Display_Text     - full path shown in the "Mapped" list
@@ -32,27 +35,34 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT loc.Location_ID   AS Leaf_ID,
+           mt.Measure_Type   AS Leaf_Type,
            loc.Location_Name AS Leaf_Name,
            loc.Model_ID      AS Source_Model_ID,
            area.Area_Name    AS Area_Name,
            part.Part_Name    AS Part_Name,
            che.Checkpoint_Name,
            loc.Location_Name,
-           CASE WHEN loc.Is_Gap = 1 AND loc.Is_Flushness = 1 THEN 'Gap / Flush'
-                WHEN loc.Is_Gap = 1 THEN 'Gap'
-                WHEN loc.Is_Flushness = 1 THEN 'Flush'
-                ELSE '' END  AS Measure_Type,
-           CONCAT(area.Area_Name, ' > ', part.Part_Name, ' > ', che.Checkpoint_Name, ' > ', loc.Location_Name) AS Display_Text
+           mt.Measure_Type,
+           CONCAT(area.Area_Name, ' > ', part.Part_Name, ' > ', che.Checkpoint_Name, ' > ', loc.Location_Name,
+                  CASE WHEN mt.Measure_Type IS NOT NULL THEN CONCAT(' (', mt.Measure_Type, ')') ELSE '' END) AS Display_Text
     FROM [1D_Module].dbo.MM_LocationMaster loc
     JOIN [1D_Module].dbo.MM_CheckpointMaster che ON loc.Checkpoint_ID = che.Checkpoint_ID
     JOIN [1D_Module].dbo.MM_PartMaster part      ON che.Part_ID = part.Part_ID
     JOIN [1D_Module].dbo.MM_AreaMaster area      ON part.Area_ID = area.Area_ID
+    -- One row per measure: a location with both Gap and Flush gives two rows
+    CROSS APPLY (
+        SELECT CAST(N'Gap' AS NVARCHAR(20)) AS Measure_Type, 1 AS Measure_Order WHERE loc.Is_Gap = 1
+        UNION ALL
+        SELECT N'Flush', 2 WHERE loc.Is_Flushness = 1
+        UNION ALL
+        SELECT NULL, 3 WHERE ISNULL(loc.Is_Gap, 0) = 0 AND ISNULL(loc.Is_Flushness, 0) = 0
+    ) mt
     WHERE loc.Audit_Type_Id = 2
       AND loc.Is_Active = 1 AND che.Is_Active = 1 AND part.Is_Active = 1 AND area.Is_Active = 1
       AND loc.Model_ID IN (
             SELECT mo.Model_ID FROM [1D_Module].dbo.MM_Model mo
             WHERE LTRIM(RTRIM(mo.Model_Name)) COLLATE DATABASE_DEFAULT = LTRIM(RTRIM(@Model_Name)))
-    ORDER BY loc.SORTORDER, che.SORTORDER, part.SORTORDER, area.SORTORDER;
+    ORDER BY loc.SORTORDER, che.SORTORDER, part.SORTORDER, area.SORTORDER, mt.Measure_Order;
 END
 GO
 
@@ -64,27 +74,34 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT loc.Location_ID   AS Leaf_ID,
+           mt.Measure_Type   AS Leaf_Type,
            loc.Location_Name AS Leaf_Name,
            loc.Model_ID      AS Source_Model_ID,
            area.Area_Name    AS Area_Name,
            part.Part_Name    AS Part_Name,
            che.Checkpoint_Name,
            loc.Location_Name,
-           CASE WHEN loc.Is_Gap = 1 AND loc.Is_Flushness = 1 THEN 'Gap / Flush'
-                WHEN loc.Is_Gap = 1 THEN 'Gap'
-                WHEN loc.Is_Flushness = 1 THEN 'Flush'
-                ELSE '' END  AS Measure_Type,
-           CONCAT(area.Area_Name, ' > ', part.Part_Name, ' > ', che.Checkpoint_Name, ' > ', loc.Location_Name) AS Display_Text
+           mt.Measure_Type,
+           CONCAT(area.Area_Name, ' > ', part.Part_Name, ' > ', che.Checkpoint_Name, ' > ', loc.Location_Name,
+                  CASE WHEN mt.Measure_Type IS NOT NULL THEN CONCAT(' (', mt.Measure_Type, ')') ELSE '' END) AS Display_Text
     FROM [1D_Module].dbo.MM_LocationMaster loc
     JOIN [1D_Module].dbo.MM_CheckpointMaster che ON loc.Checkpoint_ID = che.Checkpoint_ID
     JOIN [1D_Module].dbo.MM_PartMaster part      ON che.Part_ID = part.Part_ID
     JOIN [1D_Module].dbo.MM_AreaMaster area      ON part.Area_ID = area.Area_ID
+    -- One row per measure: a location with both Gap and Flush gives two rows
+    CROSS APPLY (
+        SELECT CAST(N'Gap' AS NVARCHAR(20)) AS Measure_Type, 1 AS Measure_Order WHERE loc.Is_Gap = 1
+        UNION ALL
+        SELECT N'Flush', 2 WHERE loc.Is_Flushness = 1
+        UNION ALL
+        SELECT NULL, 3 WHERE ISNULL(loc.Is_Gap, 0) = 0 AND ISNULL(loc.Is_Flushness, 0) = 0
+    ) mt
     WHERE loc.Audit_Type_Id = 1
       AND loc.Is_Active = 1 AND che.Is_Active = 1 AND part.Is_Active = 1 AND area.Is_Active = 1
       AND loc.Model_ID IN (
             SELECT mo.Model_ID FROM [1D_Module].dbo.MM_Model mo
             WHERE LTRIM(RTRIM(mo.Model_Name)) COLLATE DATABASE_DEFAULT = LTRIM(RTRIM(@Model_Name)))
-    ORDER BY loc.SORTORDER, che.SORTORDER, part.SORTORDER, area.SORTORDER;
+    ORDER BY loc.SORTORDER, che.SORTORDER, part.SORTORDER, area.SORTORDER, mt.Measure_Order;
 END
 GO
 

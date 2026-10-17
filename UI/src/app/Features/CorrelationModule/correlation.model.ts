@@ -58,6 +58,7 @@ export interface CrMapping {
   Leaf_Level_Name?: string;
   Source_Model_ID?: number | null;
   Source_Leaf_ID: number;
+  Source_Leaf_Type?: string | null;
   Source_Display_Text?: string;
   Inserted_Date?: string | Date | null;
   Mapped_By?: string;
@@ -70,7 +71,7 @@ export interface CrParameterMappings {
 
 /**
  * One master-data row of a source application. Always carries Leaf_ID,
- * Leaf_Name, Source_Model_ID, Display_Text, Is_Mapped, Other_Parameters plus
+ * Leaf_Type (Gap / Flush for 1D, otherwise null), Leaf_Name, Source_Model_ID, Display_Text, Is_Mapped, Other_Parameters plus
  * the application specific columns described by CrApplication.Columns.
  */
 export type CrMasterRow = Record<string, unknown>;
@@ -82,6 +83,7 @@ export interface CrMasterData {
 
 export interface CrLeafItem {
   Leaf_ID: number;
+  Leaf_Type?: string | null;
   Source_Model_ID?: number | null;
   Display_Text?: string;
 }

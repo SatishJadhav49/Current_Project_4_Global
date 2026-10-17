@@ -218,6 +218,7 @@ BEGIN
            a.Leaf_Level_Name,
            m.Source_Model_ID,
            m.Source_Leaf_ID,
+           m.Source_Leaf_Type,
            m.Source_Display_Text,
            m.Inserted_Date,
            e.Employee_Name AS Mapped_By
@@ -260,6 +261,7 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT m.Source_Leaf_ID,
+           m.Source_Leaf_Type,
            m.CR_Parameter_ID,
            p.Parameter_Name
     FROM dbo.MM_CR_Parameter_Mapping m
@@ -274,6 +276,7 @@ GO
 /* ---------------------------------------------------------------------
    Bulk map leaves of one application to a parameter (one transaction).
    Leaves already mapped to this parameter are skipped, not duplicated.
+   A leaf is identified by Source_Leaf_ID + Source_Leaf_Type (e.g. Gap / Flush).
    --------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.SP_CR_Save_Mappings
     @CR_Parameter_ID INT,
@@ -298,7 +301,9 @@ BEGIN
         RETURN;
     END
 
-    DECLARE @Requested INT = (SELECT COUNT(DISTINCT Source_Leaf_ID) FROM @Leaves);
+    DECLARE @Requested INT = (
+        SELECT COUNT(1) FROM (SELECT DISTINCT Source_Leaf_ID, NULLIF(LTRIM(RTRIM(Source_Leaf_Type)), N'') AS T FROM @Leaves) d
+    );
 
     IF @Requested = 0
     BEGIN
@@ -309,20 +314,22 @@ BEGIN
     BEGIN TRANSACTION;
 
     INSERT INTO dbo.MM_CR_Parameter_Mapping
-        (CR_Parameter_ID, App_ID, Source_Model_ID, Source_Leaf_ID, Source_Display_Text, Is_Active, Inserted_User_ID, Inserted_Host, Inserted_Date)
-    SELECT @CR_Parameter_ID, @App_ID, l.Source_Model_ID, l.Source_Leaf_ID, l.Source_Display_Text, 1, @User_ID, @Host, GETDATE()
+        (CR_Parameter_ID, App_ID, Source_Model_ID, Source_Leaf_ID, Source_Leaf_Type, Source_Display_Text, Is_Active, Inserted_User_ID, Inserted_Host, Inserted_Date)
+    SELECT @CR_Parameter_ID, @App_ID, l.Source_Model_ID, l.Source_Leaf_ID, l.Source_Leaf_Type, l.Source_Display_Text, 1, @User_ID, @Host, GETDATE()
     FROM (
         SELECT Source_Leaf_ID,
+               NULLIF(LTRIM(RTRIM(Source_Leaf_Type)), N'') AS Source_Leaf_Type,
                MAX(Source_Model_ID)     AS Source_Model_ID,
                MAX(Source_Display_Text) AS Source_Display_Text
         FROM @Leaves
-        GROUP BY Source_Leaf_ID
+        GROUP BY Source_Leaf_ID, NULLIF(LTRIM(RTRIM(Source_Leaf_Type)), N'')
     ) l
     WHERE NOT EXISTS (
         SELECT 1 FROM dbo.MM_CR_Parameter_Mapping x WITH (UPDLOCK, HOLDLOCK)
         WHERE x.CR_Parameter_ID = @CR_Parameter_ID
           AND x.App_ID = @App_ID
           AND x.Source_Leaf_ID = l.Source_Leaf_ID
+          AND ISNULL(x.Source_Leaf_Type, N'') = ISNULL(l.Source_Leaf_Type, N'')
           AND x.Is_Active = 1
     );
 

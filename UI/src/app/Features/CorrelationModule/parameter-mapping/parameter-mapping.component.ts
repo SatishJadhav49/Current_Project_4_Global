@@ -194,10 +194,11 @@ export class ParameterMappingComponent implements OnInit {
       .filter(
         (mapping) =>
           mapping.App_ID === app.App_ID &&
-          !present.has(String(mapping.Source_Leaf_ID))
+          !present.has(this.mappingLeafKey(mapping))
       )
       .map((mapping) => ({
         Leaf_ID: mapping.Source_Leaf_ID,
+        Leaf_Type: mapping.Source_Leaf_Type ?? null,
         Display_Text: mapping.Source_Display_Text,
         Is_Orphan: true,
       }));
@@ -286,8 +287,22 @@ export class ParameterMappingComponent implements OnInit {
     return value === null || value === undefined ? '' : String(value);
   }
 
+  /** A leaf is identified by its ID plus optional type (1D: Gap / Flush share one Location_ID). */
   leafKey(row: CrMasterRow): string {
-    return this.cellValue(row, 'Leaf_ID');
+    return this.buildLeafKey(row['Leaf_ID'], row['Leaf_Type']);
+  }
+
+  private mappingLeafKey(mapping: CrMapping): string {
+    return this.buildLeafKey(mapping.Source_Leaf_ID, mapping.Source_Leaf_Type);
+  }
+
+  private buildLeafKey(leafId: unknown, leafType: unknown): string {
+    const id = leafId === null || leafId === undefined ? '' : String(leafId);
+    const type =
+      leafType === null || leafType === undefined
+        ? ''
+        : String(leafType).trim().toUpperCase();
+    return `${id}|${type}`;
   }
 
   private mappingKey(appId: number, leafKey: string): string {
@@ -423,6 +438,7 @@ export class ParameterMappingComponent implements OnInit {
 
     const items = rowsToMap.map((row) => ({
       Leaf_ID: Number(row['Leaf_ID']),
+      Leaf_Type: this.cellValue(row, 'Leaf_Type') || null,
       Source_Model_ID:
         row['Source_Model_ID'] === null || row['Source_Model_ID'] === undefined
           ? null
@@ -503,7 +519,7 @@ export class ParameterMappingComponent implements OnInit {
               }
 
               targets.forEach((mapping) =>
-                this.selectedLeafKeys.delete(String(mapping.Source_Leaf_ID))
+                this.selectedLeafKeys.delete(this.mappingLeafKey(mapping))
               );
               this.reloadMappings();
             },
@@ -530,7 +546,7 @@ export class ParameterMappingComponent implements OnInit {
     this.mappings = mappings;
     this.mappingByKey = new Map(
       mappings.map((mapping) => [
-        this.mappingKey(mapping.App_ID, String(mapping.Source_Leaf_ID)),
+        this.mappingKey(mapping.App_ID, this.mappingLeafKey(mapping)),
         mapping,
       ])
     );
