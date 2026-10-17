@@ -69,14 +69,16 @@ export class ReportExportService {
       sheet.addRow([series.App_Name ?? '', series.Display_Text ?? '']).font = { bold: true };
       sheet.addRow([]);
 
-      const headers = ['Audit Date', 'Reading No', 'Reading', 'LSL', 'USL', 'Status'];
+      const headers = series.Is_Average
+        ? ['Audit Date', 'Average', 'Reading 1', 'Reading 2', 'Reading 3', 'LSL', 'USL', 'Status']
+        : ['Audit Date', 'Reading', 'LSL', 'USL', 'Status'];
       this.styleHeader(sheet.addRow(headers));
 
       series.Points.forEach((point) => {
         const row = sheet.addRow([
           new Date(point.Audit_Date),
-          point.Reading_No,
           point.Reading,
+          ...(series.Is_Average ? [point.Reading1 ?? '', point.Reading2 ?? '', point.Reading3 ?? ''] : []),
           point.LSL ?? '',
           point.USL ?? '',
           point.Is_Out_Of_Spec ? 'Out of spec' : 'OK',

@@ -18,8 +18,8 @@ type XYPoint = { x: number; y: number | null };
 /**
  * X Chart (individual readings) of one mapped item.
  * The x axis is the reading sequence (1..n) labelled with the audit date, so only
- * dates that have data are shown and Reading1..3 of one audit sit side by side
- * (the date repeats) instead of on a vertical line. Stepped LSL / USL lines are
+ * dates that have data are shown. Multi-reading apps plot one point per audit
+ * (average of Reading1..3, i.e. an X-bar chart); the readings are in the tooltip. Stepped LSL / USL lines are
  * labelled only at start and end; out-of-spec readings get red markers.
  */
 @Component({
@@ -266,14 +266,18 @@ export class XChartComponent implements ReportChart, AfterViewInit, OnChanges, O
     const status = point.Is_Out_Of_Spec
       ? `<span style="color:${COLORS.outOfSpec};font-weight:600">Out of spec</span>`
       : '<span style="color:#059669;font-weight:600">OK</span>';
-    const readingNo = this.series.Points.some((p) => p.Reading_No > 1)
-      ? ` <span style="color:#94a3b8">(R${point.Reading_No})</span>`
-      : '';
+    const individual = [point.Reading1, point.Reading2, point.Reading3]
+      .map((value, i) => (value === null || value === undefined ? '' : `R${i + 1} ${this.format(value)}`))
+      .filter(Boolean)
+      .join(' · ');
+    const averageLabel = this.series.Is_Average ? ' <span style="color:#94a3b8">(avg)</span>' : '';
+    const individualLine = individual ? `<div style="color:#64748b">${individual}</div>` : '';
 
     return `
       <div style="padding:8px 10px;font-size:12px;line-height:1.5;min-width:150px">
         <div style="color:#64748b">${date}</div>
-        <div><b style="font-size:14px;color:#0f172a">${this.format(point.Reading)}</b>${readingNo}</div>
+        <div><b style="font-size:14px;color:#0f172a">${this.format(point.Reading)}</b>${averageLabel}</div>
+        ${individualLine}
         <div style="color:#64748b">LSL ${this.format(point.LSL)} · USL ${this.format(point.USL)}</div>
         <div>${status}</div>
       </div>`;

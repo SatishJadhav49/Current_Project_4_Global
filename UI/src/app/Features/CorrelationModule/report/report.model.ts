@@ -3,7 +3,11 @@ import { CrParameter } from '../correlation.model';
 export interface CrReadingPoint {
   Audit_Date: string | Date;
   Reading_No: number;
+  /** Plotted value - average of Reading1..3 for multi-reading apps. */
   Reading: number;
+  Reading1?: number | null;
+  Reading2?: number | null;
+  Reading3?: number | null;
   LSL?: number | null;
   USL?: number | null;
   Is_Out_Of_Spec: boolean;
@@ -31,6 +35,8 @@ export interface CrReportSeries {
   Source_Leaf_Type?: string | null;
   Display_Text?: string;
   Error?: string | null;
+  /** True when each point is the average of Reading1..3 (X-bar chart). */
+  Is_Average?: boolean;
   Stats: CrReportStats;
   Points: CrReadingPoint[];
 }

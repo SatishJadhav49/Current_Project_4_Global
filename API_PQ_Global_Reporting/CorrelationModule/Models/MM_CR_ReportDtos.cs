@@ -26,6 +26,9 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Models
         /// <summary>Set when readings could not be loaded for this application.</summary>
         public string? Error { get; set; }
 
+        /// <summary>True when each point is the average of Reading1..3 (X-bar chart).</summary>
+        public bool Is_Average { get; set; }
+
         public MM_CR_ReportStatsDto Stats { get; set; } = new();
         public List<MM_CR_ReadingPointDto> Points { get; set; } = new();
     }
@@ -35,6 +38,10 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Models
         public DateTime Audit_Date { get; set; }
         public int Reading_No { get; set; }
         public decimal Reading { get; set; }
+        /// <summary>Individual readings behind an averaged point (null for single-reading apps).</summary>
+        public decimal? Reading1 { get; set; }
+        public decimal? Reading2 { get; set; }
+        public decimal? Reading3 { get; set; }
         public decimal? LSL { get; set; }
         public decimal? USL { get; set; }
         public bool Is_Out_Of_Spec { get; set; }

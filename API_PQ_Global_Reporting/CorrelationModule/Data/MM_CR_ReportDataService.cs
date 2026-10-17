@@ -153,6 +153,14 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                 command.Parameters.Add(new SqlParameter("@Last_N", SqlDbType.Int) { Value = (object?)lastN ?? DBNull.Value });
 
                 using var reader = await command.ExecuteReaderAsync();
+
+                // Reading1..3 are optional in the reading SP contract
+                var columns = Enumerable.Range(0, reader.FieldCount)
+                    .Select(reader.GetName)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                decimal? Optional(string name) =>
+                    columns.Contains(name) ? ToNullableDecimal(reader[name]) : null;
+
                 while (await reader.ReadAsync())
                 {
                     if (reader["Reading"] == DBNull.Value || reader["Audit_Date"] == DBNull.Value) continue;
@@ -169,6 +177,9 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                         Audit_Date = Convert.ToDateTime(reader["Audit_Date"]),
                         Reading_No = reader["Reading_No"] != DBNull.Value ? Convert.ToInt32(reader["Reading_No"]) : 1,
                         Reading = reading,
+                        Reading1 = Optional("Reading1"),
+                        Reading2 = Optional("Reading2"),
+                        Reading3 = Optional("Reading3"),
                         LSL = lsl,
                         USL = usl,
                         Is_Out_Of_Spec = (lsl.HasValue && reading < lsl.Value) || (usl.HasValue && reading > usl.Value)
@@ -179,6 +190,7 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                 foreach (var series in seriesByLeaf.Values)
                 {
                     series.Points = series.Points.OrderBy(p => p.Audit_Date).ToList();
+                    series.Is_Average = series.Points.Any(p => p.Reading1.HasValue || p.Reading2.HasValue || p.Reading3.HasValue);
                 }
             }
             catch (Exception ex)

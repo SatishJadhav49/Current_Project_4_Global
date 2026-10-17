@@ -193,10 +193,6 @@ export class CorrelationReportComponent implements OnInit {
 
   //*************************************** Period ***************************************//
 
-  selectPreset(key: DatePresetKey): void {
-    this.datePreset = key;
-  }
-
   /** Filter for the API plus its display text, or an error message. */
   private currentFilter(): { filter: CrReportFilter; text: string } | string {
     if (this.datePreset === 'lastN') {
@@ -282,6 +278,14 @@ export class CorrelationReportComponent implements OnInit {
 
   get activeChartLabel(): string {
     return this.chartTypes.find((c) => c.key === this.activeChart)?.label ?? '';
+  }
+
+  /** Small title above a card's chart, e.g. "X̄ Chart · Average of readings". */
+  chartTitle(series: CrReportSeries): string {
+    if (this.activeChart === 'histogram') {
+      return series.Is_Average ? 'Histogram with Normal Curve · Average of readings' : 'Histogram with Normal Curve';
+    }
+    return series.Is_Average ? 'X̄ Chart · Average of readings' : 'X Chart · Individual readings';
   }
 
   get emptyReadingsText(): string {

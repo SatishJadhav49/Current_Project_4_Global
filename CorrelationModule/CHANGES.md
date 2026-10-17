@@ -180,3 +180,29 @@ EXEC dbo.SP_CR_Get_Readings_Torque @Leaves = @L, @Last_N = 10;   -- 10 audits, u
 **Files**
 - New: `report/histogram-chart.component.ts`, `report/report-chart.ts` (shared chart contract + colours)
 - Changed: `report/chart-types.ts`, `report/x-chart.component.ts`, `report/correlation-report.component.ts|html`, `report/report-export.service.ts`
+
+---
+
+## 10. Report update (2026-10-17): period dropdown, averaged readings (X̄), standard histogram
+
+**SQL:** **re-run `SQL/07_Report.sql`** (whole file).
+- Torque and EST/GD now return **one point per audit = average of the non-NULL Reading1..3** (the X̄ chart), plus `Reading1..Reading3` for the tooltip and Excel.
+- 1D returns `Reading1..3` as NULL (single reading, X chart). Last N mode is unchanged.
+
+**API:** points carry `Reading1..3`; each series has `Is_Average` (true for averaged apps).
+
+**UI**
+- **Period** is a dropdown (Last 7 days, This month, Last month, Last 3 months, Custom range, Last N audits). Custom dates or "No. of audits" appear
+  **in the same row**, followed by Generate; the "Showing: …" text is under the row.
+- Each card has a small chart title: "X̄ Chart · Average of readings" (Torque / EST / GD) or "X Chart · Individual readings" (1D);
+  on the Histogram tab: "Histogram with Normal Curve". The tooltip shows the average plus R1 / R2 / R3.
+- **Histogram** follows the standard logic in `histogram.ts`:
+  - group width tied to the tolerance (~10 groups inside USL−LSL, round step, ≤ 25 bars); Sturges rule when there is no tolerance;
+  - the range covers LSL / USL; spec lines are drawn on the nearest group;
+  - normal curve (mean, sample std-dev) scaled to frequency; colours #7cb5ec / #1976d2; **no red bars**.
+- Excel item sheets: averaged apps show Average + Reading 1–3 columns.
+
+**Files**
+- SQL: `07_Report.sql`
+- API: `Data/MM_CR_ReportDataService.cs`, `Models/MM_CR_ReportDtos.cs`
+- UI `report/`: `histogram-chart.component.ts`, `x-chart.component.ts`, `correlation-report.component.ts|html`, `report-export.service.ts`, `report.model.ts`
