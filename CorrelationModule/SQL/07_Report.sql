@@ -5,10 +5,14 @@
    Database    : PQ_Dashboard_Master (reads [1D_Module], [PQ_EST_GD],
                  [PQ_Torque_Audit] with 3-part names)
    Re-runnable : yes. Run AFTER 01-06. Execute the whole file (F5).
+                 (Re-run it after an update - all SPs are CREATE OR ALTER.)
 
    READING SP CONTRACT (every application must follow it):
      Input  : @Leaves    dbo.MM_CR_LeafList READONLY  (Source_Leaf_ID + Source_Leaf_Type)
-              @From_Date DATE, @To_Date DATE          (both inclusive)
+              @From_Date DATE, @To_Date DATE          (both inclusive) - date mode
+              @Last_N    INT                          - "last N audits" mode: when set,
+                         the dates are ignored and the last N audits of EACH leaf
+                         (with all their readings) are returned
      Output : Leaf_ID, Leaf_Type   - must echo the values passed in @Leaves
               Audit_Date           - x axis
               Reading_No           - 1 for single-reading apps, 1..3 for Reading1..3
@@ -38,68 +42,100 @@ GO
       whose specification is of the same type.                             */
 CREATE OR ALTER PROCEDURE dbo.SP_CR_Get_Readings_1D
     @Leaves    dbo.MM_CR_LeafList READONLY,
-    @From_Date DATE,
-    @To_Date   DATE
+    @From_Date DATE = NULL,
+    @To_Date   DATE = NULL,
+    @Last_N    INT  = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @To_Exclusive DATE = DATEADD(DAY, 1, @To_Date);
 
-    SELECT l.Source_Leaf_ID                          AS Leaf_ID,
-           l.Source_Leaf_Type                        AS Leaf_Type,
-           audit.Audit_Date,
-           1                                         AS Reading_No,
-           TRY_CONVERT(DECIMAL(18,4), sheet.Reading) AS Reading,
-           TRY_CONVERT(DECIMAL(18,4), spec.MinVal)   AS LSL,
-           TRY_CONVERT(DECIMAL(18,4), spec.MaxVal)   AS USL
-    FROM (SELECT DISTINCT Source_Leaf_ID, Source_Leaf_Type FROM @Leaves) l
-    JOIN [1D_Module].dbo.MM_Track_Sheet sheet          ON sheet.Location_ID = l.Source_Leaf_ID
-    JOIN [1D_Module].dbo.MM_Vehicle_Audit audit        ON audit.Audit_ID = sheet.Audit_ID
-    JOIN [1D_Module].dbo.MM_SpecificationMaster spec   ON spec.Specification_ID = sheet.Specification_ID
-    WHERE ISNULL(sheet.Is_NA, 0) = 0
-      AND audit.Audit_Date >= @From_Date
-      AND audit.Audit_Date <  @To_Exclusive
-      AND TRY_CONVERT(DECIMAL(18,4), sheet.Reading) IS NOT NULL
-      AND (    l.Source_Leaf_Type IS NULL
-           OR (l.Source_Leaf_Type = N'Gap'   AND spec.Is_Gap = 1)
-           OR (l.Source_Leaf_Type = N'Flush' AND spec.Is_Flushness = 1))
-    ORDER BY audit.Audit_Date;
+    WITH Base AS
+    (
+        SELECT l.Source_Leaf_ID   AS Leaf_ID,
+               l.Source_Leaf_Type AS Leaf_Type,
+               audit.Audit_ID,
+               audit.Audit_Date,
+               1                                         AS Reading_No,
+               TRY_CONVERT(DECIMAL(18,4), sheet.Reading) AS Reading,
+               TRY_CONVERT(DECIMAL(18,4), spec.MinVal)   AS LSL,
+               TRY_CONVERT(DECIMAL(18,4), spec.MaxVal)   AS USL
+        FROM (SELECT DISTINCT Source_Leaf_ID, Source_Leaf_Type FROM @Leaves) l
+        JOIN [1D_Module].dbo.MM_Track_Sheet sheet        ON sheet.Location_ID = l.Source_Leaf_ID
+        JOIN [1D_Module].dbo.MM_Vehicle_Audit audit      ON audit.Audit_ID = sheet.Audit_ID
+        JOIN [1D_Module].dbo.MM_SpecificationMaster spec ON spec.Specification_ID = sheet.Specification_ID
+        WHERE ISNULL(sheet.Is_NA, 0) = 0
+          AND TRY_CONVERT(DECIMAL(18,4), sheet.Reading) IS NOT NULL
+          AND (    l.Source_Leaf_Type IS NULL
+               OR (l.Source_Leaf_Type = N'Gap'   AND spec.Is_Gap = 1)
+               OR (l.Source_Leaf_Type = N'Flush' AND spec.Is_Flushness = 1))
+          AND (@Last_N IS NOT NULL
+               OR (audit.Audit_Date >= @From_Date AND audit.Audit_Date < @To_Exclusive))
+    ),
+    Ranked AS
+    (
+        -- 1 = latest audit of the leaf; one rank per audit (all its readings share it)
+        SELECT *, DENSE_RANK() OVER (PARTITION BY Leaf_ID, Leaf_Type
+                                     ORDER BY Audit_Date DESC, Audit_ID DESC) AS Audit_Rank
+        FROM Base
+    )
+    SELECT Leaf_ID, Leaf_Type, Audit_Date, Reading_No, Reading, LSL, USL
+    FROM Ranked
+    WHERE @Last_N IS NULL OR Audit_Rank <= @Last_N
+    ORDER BY Leaf_ID, Leaf_Type, Audit_Date, Audit_ID, Reading_No
+    OPTION (RECOMPILE);
 END
 GO
 
 /* 3. Torque readings - Reading1..3 returned as separate points ---------- */
 CREATE OR ALTER PROCEDURE dbo.SP_CR_Get_Readings_Torque
     @Leaves    dbo.MM_CR_LeafList READONLY,
-    @From_Date DATE,
-    @To_Date   DATE
+    @From_Date DATE = NULL,
+    @To_Date   DATE = NULL,
+    @Last_N    INT  = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @To_Exclusive DATE = DATEADD(DAY, 1, @To_Date);
 
-    SELECT l.Source_Leaf_ID                        AS Leaf_ID,
-           l.Source_Leaf_Type                      AS Leaf_Type,
-           audit.Audit_Date,
-           r.Reading_No,
-           r.Reading,
-           TRY_CONVERT(DECIMAL(18,4), para.LSL)    AS LSL,
-           TRY_CONVERT(DECIMAL(18,4), para.USL)    AS USL
-    FROM (SELECT DISTINCT Source_Leaf_ID, Source_Leaf_Type FROM @Leaves) l
-    JOIN [PQ_Torque_Audit].dbo.MM_Audit_Sheet_Details sheet ON sheet.Parameter_ID = l.Source_Leaf_ID
-    JOIN [PQ_Torque_Audit].dbo.MM_Audit_Master audit        ON audit.Audit_ID = sheet.Audit_ID
-    JOIN [PQ_Torque_Audit].dbo.MM_ParameterMaster para      ON para.Parameter_ID = sheet.Parameter_ID
-    CROSS APPLY (VALUES
-        (1, TRY_CONVERT(DECIMAL(18,4), sheet.Reading1)),
-        (2, TRY_CONVERT(DECIMAL(18,4), sheet.Reading2)),
-        (3, TRY_CONVERT(DECIMAL(18,4), sheet.Reading3))
-    ) r (Reading_No, Reading)
-    WHERE ISNULL(sheet.Is_NA, 0) = 0
-      AND audit.Audit_Date >= @From_Date
-      AND audit.Audit_Date <  @To_Exclusive
-      AND r.Reading IS NOT NULL
-    ORDER BY audit.Audit_Date, r.Reading_No;
+    WITH Base AS
+    (
+        SELECT l.Source_Leaf_ID   AS Leaf_ID,
+               l.Source_Leaf_Type AS Leaf_Type,
+               audit.Audit_ID,
+               audit.Audit_Date,
+               r.Reading_No,
+               r.Reading,
+               TRY_CONVERT(DECIMAL(18,4), para.LSL) AS LSL,
+               TRY_CONVERT(DECIMAL(18,4), para.USL) AS USL
+        FROM (SELECT DISTINCT Source_Leaf_ID, Source_Leaf_Type FROM @Leaves) l
+        JOIN [PQ_Torque_Audit].dbo.MM_Audit_Sheet_Details sheet ON sheet.Parameter_ID = l.Source_Leaf_ID
+        JOIN [PQ_Torque_Audit].dbo.MM_Audit_Master audit        ON audit.Audit_ID = sheet.Audit_ID
+        JOIN [PQ_Torque_Audit].dbo.MM_ParameterMaster para      ON para.Parameter_ID = sheet.Parameter_ID
+        CROSS APPLY (VALUES
+            (1, TRY_CONVERT(DECIMAL(18,4), sheet.Reading1)),
+            (2, TRY_CONVERT(DECIMAL(18,4), sheet.Reading2)),
+            (3, TRY_CONVERT(DECIMAL(18,4), sheet.Reading3))
+        ) r (Reading_No, Reading)
+        WHERE ISNULL(sheet.Is_NA, 0) = 0
+          AND r.Reading IS NOT NULL
+          AND (@Last_N IS NOT NULL
+               OR (audit.Audit_Date >= @From_Date AND audit.Audit_Date < @To_Exclusive))
+    ),
+    Ranked AS
+    (
+        -- 1 = latest audit of the leaf; one rank per audit (all its readings share it)
+        SELECT *, DENSE_RANK() OVER (PARTITION BY Leaf_ID, Leaf_Type
+                                     ORDER BY Audit_Date DESC, Audit_ID DESC) AS Audit_Rank
+        FROM Base
+    )
+    SELECT Leaf_ID, Leaf_Type, Audit_Date, Reading_No, Reading, LSL, USL
+    FROM Ranked
+    WHERE @Last_N IS NULL OR Audit_Rank <= @Last_N
+    ORDER BY Leaf_ID, Leaf_Type, Audit_Date, Audit_ID, Reading_No
+    OPTION (RECOMPILE);
 END
 GO
 
@@ -107,35 +143,51 @@ GO
       NOTE: table name MM_Audit_Sheet_Datails is spelled as in the database. */
 CREATE OR ALTER PROCEDURE dbo.SP_CR_Get_Readings_EST_GD
     @Leaves    dbo.MM_CR_LeafList READONLY,
-    @From_Date DATE,
-    @To_Date   DATE
+    @From_Date DATE = NULL,
+    @To_Date   DATE = NULL,
+    @Last_N    INT  = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @To_Exclusive DATE = DATEADD(DAY, 1, @To_Date);
 
-    SELECT l.Source_Leaf_ID                        AS Leaf_ID,
-           l.Source_Leaf_Type                      AS Leaf_Type,
-           audit.Audit_Date,
-           r.Reading_No,
-           r.Reading,
-           TRY_CONVERT(DECIMAL(18,4), spec.LSL)    AS LSL,
-           TRY_CONVERT(DECIMAL(18,4), spec.USL)    AS USL
-    FROM (SELECT DISTINCT Source_Leaf_ID, Source_Leaf_Type FROM @Leaves) l
-    JOIN [PQ_EST_GD].dbo.MM_Audit_Sheet_Datails sheet    ON sheet.Location_ID = l.Source_Leaf_ID
-    JOIN [PQ_EST_GD].dbo.MM_Audit_Master audit           ON audit.Audit_ID = sheet.Audit_ID
-    JOIN [PQ_EST_GD].dbo.MM_SpecificationDetails spec    ON spec.Specification_ID = sheet.Specification_ID
-    CROSS APPLY (VALUES
-        (1, TRY_CONVERT(DECIMAL(18,4), sheet.Reading1)),
-        (2, TRY_CONVERT(DECIMAL(18,4), sheet.Reading2)),
-        (3, TRY_CONVERT(DECIMAL(18,4), sheet.Reading3))
-    ) r (Reading_No, Reading)
-    WHERE ISNULL(sheet.Is_NA, 0) = 0
-      AND audit.Audit_Date >= @From_Date
-      AND audit.Audit_Date <  @To_Exclusive
-      AND r.Reading IS NOT NULL
-    ORDER BY audit.Audit_Date, r.Reading_No;
+    WITH Base AS
+    (
+        SELECT l.Source_Leaf_ID   AS Leaf_ID,
+               l.Source_Leaf_Type AS Leaf_Type,
+               audit.Audit_ID,
+               audit.Audit_Date,
+               r.Reading_No,
+               r.Reading,
+               TRY_CONVERT(DECIMAL(18,4), spec.LSL) AS LSL,
+               TRY_CONVERT(DECIMAL(18,4), spec.USL) AS USL
+        FROM (SELECT DISTINCT Source_Leaf_ID, Source_Leaf_Type FROM @Leaves) l
+        JOIN [PQ_EST_GD].dbo.MM_Audit_Sheet_Datails sheet  ON sheet.Location_ID = l.Source_Leaf_ID
+        JOIN [PQ_EST_GD].dbo.MM_Audit_Master audit         ON audit.Audit_ID = sheet.Audit_ID
+        JOIN [PQ_EST_GD].dbo.MM_SpecificationDetails spec  ON spec.Specification_ID = sheet.Specification_ID
+        CROSS APPLY (VALUES
+            (1, TRY_CONVERT(DECIMAL(18,4), sheet.Reading1)),
+            (2, TRY_CONVERT(DECIMAL(18,4), sheet.Reading2)),
+            (3, TRY_CONVERT(DECIMAL(18,4), sheet.Reading3))
+        ) r (Reading_No, Reading)
+        WHERE ISNULL(sheet.Is_NA, 0) = 0
+          AND r.Reading IS NOT NULL
+          AND (@Last_N IS NOT NULL
+               OR (audit.Audit_Date >= @From_Date AND audit.Audit_Date < @To_Exclusive))
+    ),
+    Ranked AS
+    (
+        -- 1 = latest audit of the leaf; one rank per audit (all its readings share it)
+        SELECT *, DENSE_RANK() OVER (PARTITION BY Leaf_ID, Leaf_Type
+                                     ORDER BY Audit_Date DESC, Audit_ID DESC) AS Audit_Rank
+        FROM Base
+    )
+    SELECT Leaf_ID, Leaf_Type, Audit_Date, Reading_No, Reading, LSL, USL
+    FROM Ranked
+    WHERE @Last_N IS NULL OR Audit_Rank <= @Last_N
+    ORDER BY Leaf_ID, Leaf_Type, Audit_Date, Audit_ID, Reading_No
+    OPTION (RECOMPILE);
 END
 GO
 

@@ -3,8 +3,12 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Models
     public class MM_CR_ReportDto
     {
         public MM_CR_ParameterDto? Parameter { get; set; }
-        public DateTime From_Date { get; set; }
-        public DateTime To_Date { get; set; }
+        /// <summary>Date mode - null in "last N audits" mode.</summary>
+        public DateTime? From_Date { get; set; }
+        public DateTime? To_Date { get; set; }
+
+        /// <summary>"Last N audits" mode - last N audits of each mapped item.</summary>
+        public int? Last_N { get; set; }
         public List<MM_CR_ReportSeriesDto> Series { get; set; } = new();
     }
 

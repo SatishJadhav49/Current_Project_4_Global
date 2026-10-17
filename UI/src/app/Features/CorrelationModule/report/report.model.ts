@@ -37,13 +37,15 @@ export interface CrReportSeries {
 
 export interface CrReport {
   Parameter: CrParameter | null;
-  From_Date: string | Date;
-  To_Date: string | Date;
+  /** Date mode - null in "last N audits" mode. */
+  From_Date?: string | Date | null;
+  To_Date?: string | Date | null;
+  /** "Last N audits" mode - last N audits of each mapped item. */
+  Last_N?: number | null;
   Series: CrReportSeries[];
 }
 
-/** Date range shared by every chart so trends line up across applications. */
-export interface CrDateRange {
-  from: Date;
-  to: Date;
-}
+/** Report filter sent to the API: a date range or the last N audits. */
+export type CrReportFilter =
+  | { fromDate: string; toDate: string }
+  | { lastN: number };

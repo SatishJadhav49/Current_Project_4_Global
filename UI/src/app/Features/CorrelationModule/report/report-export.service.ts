@@ -19,7 +19,7 @@ export class ReportExportService {
     summary.addRow(['Correlation Report']).font = { bold: true, size: 14 };
     summary.addRow(['Parameter', parameterName]);
     summary.addRow(['Model', report.Parameter?.Model_Name ?? '']);
-    summary.addRow(['Date Range', rangeText]);
+    summary.addRow(['Period', rangeText]);
     summary.addRow([]);
 
     const summaryHeaders = [
@@ -160,7 +160,7 @@ export class ReportExportService {
         columns: [
           { text: [{ text: 'Parameter: ', style: 'muted' }, { text: parameterName, bold: true }] },
           { text: [{ text: 'Model: ', style: 'muted' }, report.Parameter?.Model_Name ?? ''] },
-          { text: [{ text: 'Date range: ', style: 'muted' }, rangeText], alignment: 'right' },
+          { text: [{ text: 'Period: ', style: 'muted' }, rangeText], alignment: 'right' },
         ],
         margin: [0, 0, 0, 10],
       },
@@ -193,7 +193,7 @@ export class ReportExportService {
         block.push({ image, width: 760 });
       } else {
         block.push({
-          text: series.Error ?? 'No readings in the selected date range.',
+          text: series.Error ?? 'No readings for the selected period.',
           style: 'muted',
           italics: true,
           margin: [0, 8, 0, 8],

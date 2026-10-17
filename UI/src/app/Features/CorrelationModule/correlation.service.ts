@@ -14,7 +14,7 @@ import {
   CrResult,
   CrUnmap,
 } from './correlation.model';
-import { CrReport } from './report/report.model';
+import { CrReport, CrReportFilter } from './report/report.model';
 
 @Injectable({
   providedIn: 'root',
@@ -79,11 +79,12 @@ export class CorrelationService {
 
   //*************************************** Report ***************************************//
 
-  getReport(crParameterId: number, fromDate: string, toDate: string): Observable<CrReport> {
-    const params = new HttpParams()
-      .set('crParameterId', crParameterId)
-      .set('fromDate', fromDate)
-      .set('toDate', toDate);
+  getReport(crParameterId: number, filter: CrReportFilter): Observable<CrReport> {
+    let params = new HttpParams().set('crParameterId', crParameterId);
+    params =
+      'lastN' in filter
+        ? params.set('lastN', filter.lastN)
+        : params.set('fromDate', filter.fromDate).set('toDate', filter.toDate);
     return this.apiRequest.get('MM_CR_Report/GetReport', params);
   }
 

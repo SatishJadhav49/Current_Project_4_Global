@@ -9,7 +9,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import ApexCharts from 'apexcharts';
-import { CrDateRange, CrReadingPoint, CrReportSeries } from './report.model';
+import { CrReadingPoint, CrReportSeries } from './report.model';
 
 type LimitKey = 'LSL' | 'USL';
 type XYPoint = { x: number; y: number | null };
@@ -21,9 +21,11 @@ const COLORS = {
 };
 
 /**
- * X Chart (individual readings) of one mapped item: reading line, stepped
- * LSL / USL lines (labelled only at start and end) and red markers for
- * out-of-spec readings. Charts share the report date range so cards line up.
+ * X Chart (individual readings) of one mapped item.
+ * The x axis is the reading sequence (1..n) labelled with the audit date, so only
+ * dates that have data are shown and Reading1..3 of one audit sit side by side
+ * (the date repeats) instead of on a vertical line. Stepped LSL / USL lines are
+ * labelled only at start and end; out-of-spec readings get red markers.
  */
 @Component({
   selector: 'app-cr-x-chart',
@@ -34,7 +36,6 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('chartHost', { static: true }) chartHost!: ElementRef<HTMLDivElement>;
 
   @Input({ required: true }) series!: CrReportSeries;
-  @Input({ required: true }) range!: CrDateRange;
   @Input() height = 260;
   /** Zoom / pan toolbar - used in the zoom modal. */
   @Input() interactive = false;
@@ -48,7 +49,7 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (this.viewReady && (changes['series'] || changes['range'] || changes['height'])) {
+    if (this.viewReady && (changes['series'] || changes['height'])) {
       this.render();
     }
   }
@@ -80,11 +81,11 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private buildOptions(): ApexCharts.ApexOptions {
     const points = this.series.Points;
-    const times = points.map((p) => this.time(p));
+    const count = points.length;
+    const dateLabels = points.map((p) => this.dateLabel(p.Audit_Date));
 
-    const readingData: XYPoint[] = points.map((p, i) => ({ x: times[i], y: p.Reading }));
-    const lslData = this.stepData(points, times, 'LSL');
-    const uslData = this.stepData(points, times, 'USL');
+    // x = position of the reading (1..n)
+    const readingData: XYPoint[] = points.map((p, i) => ({ x: i + 1, y: p.Reading }));
 
     const chartSeries: ApexAxisChartSeries = [{ name: 'Reading', data: readingData }];
     const strokeCurves: ('straight' | 'stepline')[] = ['straight'];
@@ -93,9 +94,10 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
     const colors = [COLORS.reading];
     const markerSizes = [this.interactive ? 4 : 3];
 
-    for (const [name, data] of [['USL', uslData], ['LSL', lslData]] as const) {
+    for (const key of ['USL', 'LSL'] as LimitKey[]) {
+      const data = this.limitData(points, key);
       if (!data.length) continue;
-      chartSeries.push({ name, data });
+      chartSeries.push({ name: key, data });
       strokeCurves.push('stepline');
       dashes.push(5);
       widths.push(1.4);
@@ -119,6 +121,7 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
     });
 
     const [yMin, yMax] = this.yBounds(points);
+    const maxTicks = this.interactive ? 24 : 10;
 
     return {
       chart: {
@@ -159,13 +162,20 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
         padding: { left: 8, right: 16 },
       },
       xaxis: {
-        type: 'datetime',
-        min: this.range.from.getTime(),
-        max: this.range.to.getTime(),
+        type: 'numeric',
+        min: count === 1 ? 0 : 1,
+        max: count === 1 ? 2 : count,
+        tickAmount: count <= 1 ? 2 : Math.min(count - 1, maxTicks),
+        decimalsInFloat: 0,
         labels: {
-          datetimeUTC: false,
+          rotate: -45,
+          rotateAlways: count > 6,
+          hideOverlappingLabels: true,
           style: { colors: '#64748b', fontSize: '10px' },
-          datetimeFormatter: { year: 'yyyy', month: "MMM 'yy", day: 'dd MMM', hour: 'HH:mm' },
+          formatter: (value: string) => {
+            const index = Math.round(Number(value)) - 1;
+            return index >= 0 && index < count ? dateLabels[index] : '';
+          },
         },
         axisBorder: { color: '#cbd5e1' },
         axisTicks: { color: '#cbd5e1' },
@@ -180,7 +190,7 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
           formatter: (value: number) => this.format(value),
         },
       },
-      annotations: { points: this.limitLabels(times) },
+      annotations: { points: this.limitLabels(count) },
       tooltip: {
         shared: false,
         intersect: true,
@@ -190,37 +200,15 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
     };
   }
 
-  /**
-   * Stepped limit line: a point where the limit changes plus one at the end,
-   * so a spec change shows as a step. Null limits break the line.
-   */
-  private stepData(points: CrReadingPoint[], times: number[], key: LimitKey): XYPoint[] {
+  /** Limit value at every reading position - drawn as a stepped line. */
+  private limitData(points: CrReadingPoint[], key: LimitKey): XYPoint[] {
     if (!points.some((p) => p[key] !== null && p[key] !== undefined)) return [];
-
-    const data: XYPoint[] = [];
-    let previous: number | null | undefined;
-
-    points.forEach((p, index) => {
-      const value = p[key] ?? null;
-      if (index === 0 || value !== previous) {
-        data.push({ x: times[index], y: value });
-        previous = value;
-      }
-    });
-
-    const lastIndex = points.length - 1;
-    if (data[data.length - 1].x !== times[lastIndex]) {
-      data.push({ x: times[lastIndex], y: points[lastIndex][key] ?? null });
-    }
-
-    return data;
+    return points.map((p, i) => ({ x: i + 1, y: p[key] ?? null }));
   }
 
   /** Spec values written only at the start and end of each limit line. */
-  private limitLabels(times: number[]): PointAnnotations[] {
+  private limitLabels(count: number): PointAnnotations[] {
     const stats = this.series.Stats;
-    const first = times[0];
-    const last = times[times.length - 1];
     const labels: PointAnnotations[] = [];
 
     const add = (x: number, y: number | null | undefined, text: string, anchor: 'start' | 'end', below: boolean) => {
@@ -244,11 +232,11 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
       });
     };
 
-    add(first, stats.USL_Start, 'USL', 'start', false);
-    add(first, stats.LSL_Start, 'LSL', 'start', true);
-    if (last !== first) {
-      add(last, stats.USL_End, 'USL', 'end', false);
-      add(last, stats.LSL_End, 'LSL', 'end', true);
+    add(1, stats.USL_Start, 'USL', 'start', false);
+    add(1, stats.LSL_Start, 'LSL', 'start', true);
+    if (count > 1) {
+      add(count, stats.USL_End, 'USL', 'end', false);
+      add(count, stats.LSL_End, 'LSL', 'end', true);
     }
 
     return labels;
@@ -296,8 +284,12 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
       </div>`;
   }
 
-  private time(point: CrReadingPoint): number {
-    return new Date(point.Audit_Date).getTime();
+  private dateLabel(value: string | Date): string {
+    return new Date(value).toLocaleDateString(undefined, {
+      day: '2-digit',
+      month: 'short',
+      year: '2-digit',
+    });
   }
 
   private format(value: number | null | undefined): string {

@@ -28,24 +28,72 @@
 
       <div class="lg:col-span-4">
         <label class="mb-1.5 block text-xs font-medium text-slate-600">Parameter</label>
-        <select
-          [(ngModel)]="selectedParameterId"
-          [disabled]="!selectedModelId || parametersLoading"
-          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:bg-slate-50"
-        >
-          <option [ngValue]="null" disabled>
-            {{ parametersLoading ? "Loading..." : !selectedModelId ? "Select a model first" : parameters.length ? "Select a parameter" : "No parameters for this model" }}
-          </option>
-          @for (parameter of parameters; track parameter.CR_Parameter_ID) {
-          <option [ngValue]="parameter.CR_Parameter_ID" [disabled]="!parameter.Total_Mapped">
-            {{ parameter.Parameter_Name }}{{ parameter.Total_Mapped ? "" : " (no mapping)" }}
-          </option>
+        <div class="relative" #parameterPicker>
+          <button
+            type="button"
+            (click)="toggleParameterPicker()"
+            [disabled]="!selectedModelId || parametersLoading || !parameters.length"
+            class="flex w-full items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:bg-slate-50"
+            [ngClass]="parameterOpen ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-300'"
+          >
+            <span class="truncate" [ngClass]="selectedParameter ? 'text-slate-800' : 'text-slate-400'">
+              {{ selectedParameter?.Parameter_Name || parameterPlaceholder }}
+            </span>
+            <svg class="h-4 w-4 shrink-0 text-slate-400 transition" [class.rotate-180]="parameterOpen" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+
+          @if (parameterOpen) {
+          <div class="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+            <div class="border-b border-slate-100 p-2">
+              <div class="relative">
+                <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 11a6 6 0 1 1-12 0 6 6 0 0 1 12 0Z" />
+                </svg>
+                <input
+                  #parameterSearchInput
+                  [(ngModel)]="parameterSearch"
+                  (keydown.enter)="selectFirstMatch()"
+                  type="text"
+                  placeholder="Search parameter"
+                  class="w-full rounded-md border border-slate-200 py-1.5 pl-8 pr-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                />
+              </div>
+            </div>
+            <ul class="max-h-64 overflow-y-auto py-1">
+              @for (parameter of filteredParameters; track parameter.CR_Parameter_ID) {
+              <li>
+                <button
+                  type="button"
+                  (click)="selectParameter(parameter)"
+                  [disabled]="!parameter.Total_Mapped"
+                  class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition disabled:cursor-not-allowed"
+                  [ngClass]="
+                    parameter.CR_Parameter_ID === selectedParameterId
+                      ? 'bg-indigo-50 text-indigo-700'
+                      : parameter.Total_Mapped
+                      ? 'text-slate-700 hover:bg-slate-50'
+                      : 'text-slate-400'
+                  "
+                >
+                  <span class="truncate">{{ parameter.Parameter_Name }}</span>
+                  <span class="shrink-0 text-xs" [ngClass]="parameter.Total_Mapped ? 'text-slate-400' : 'italic'">
+                    {{ parameter.Total_Mapped ? parameter.Total_Mapped + " mapped" : "no mapping" }}
+                  </span>
+                </button>
+              </li>
+              } @empty {
+              <li class="px-3 py-4 text-center text-sm text-slate-400">No parameter matches "{{ parameterSearch }}"</li>
+              }
+            </ul>
+          </div>
           }
-        </select>
+        </div>
       </div>
 
       <div class="md:col-span-2 lg:col-span-5">
-        <label class="mb-1.5 block text-xs font-medium text-slate-600">Date range</label>
+        <label class="mb-1.5 block text-xs font-medium text-slate-600">Period</label>
         <div class="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
           @for (preset of datePresets; track preset.key) {
           <button
@@ -88,9 +136,26 @@
       </div>
       }
 
-      @if (presetRangeText) {
+      @if (datePreset === 'lastN') {
+      <div>
+        <label class="mb-1.5 block text-xs font-medium text-slate-600">Number of audits</label>
+        <input
+          type="number"
+          [(ngModel)]="lastN"
+          (keydown.enter)="generate()"
+          min="1"
+          [max]="maxLastN"
+          step="1"
+          placeholder="e.g. 10"
+          class="w-32 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
+      }
+
+      @if (periodText) {
       <p class="pb-2 text-sm text-slate-500">
-        <span class="text-slate-400">Period:</span> {{ presetRangeText }}
+        <span class="text-slate-400">Showing:</span> {{ periodText }}
+        @if (datePreset === 'lastN') { <span class="text-slate-400">of each mapped item</span> }
       </p>
       }
 
@@ -130,7 +195,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
       </svg>
     </div>
-    <h3 class="text-sm font-semibold text-slate-800">Select a model, parameter and date range</h3>
+    <h3 class="text-sm font-semibold text-slate-800">Select a model, parameter and period</h3>
     <p class="mt-1 text-sm text-slate-500">Then click Generate Report to see the trends of all mapped items.</p>
   </div>
   } @else {
@@ -144,7 +209,7 @@
         <span class="rounded-md bg-slate-100 px-2 py-1 text-slate-600">
           Model <span class="font-semibold text-slate-800">{{ report.Parameter?.Model_Name }}</span>
         </span>
-        <span class="rounded-md bg-slate-100 px-2 py-1 text-slate-600">{{ rangeText }}</span>
+        <span class="rounded-md bg-slate-100 px-2 py-1 text-slate-600">{{ filterText }}</span>
         <span class="rounded-md bg-slate-100 px-2 py-1 text-slate-600">
           <span class="font-semibold text-slate-800">{{ series.length }}</span> items ·
           <span class="font-semibold text-slate-800">{{ applicationCount }}</span> applications
@@ -288,10 +353,10 @@
         <div class="flex h-[260px] items-center justify-center text-sm text-rose-600">{{ item.Error }}</div>
         } @else if (!item.Points.length) {
         <div class="flex h-[260px] flex-col items-center justify-center text-sm text-slate-400">
-          No readings in the selected date range
+          {{ emptyReadingsText }}
         </div>
-        } @else if (range) {
-        <app-cr-x-chart #cardChart [series]="item" [range]="range" [height]="260"></app-cr-x-chart>
+        } @else {
+        <app-cr-x-chart #cardChart [series]="item" [height]="260"></app-cr-x-chart>
         }
       </div>
     </article>
@@ -304,7 +369,7 @@
 </div>
 
 <!-- Zoom modal -->
-@if (zoomSeries && range) {
+@if (zoomSeries) {
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm" (click)="closeZoom()">
   <div class="flex max-h-[95vh] w-full max-w-6xl flex-col rounded-xl bg-white shadow-2xl" (click)="$event.stopPropagation()">
     <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
@@ -314,7 +379,7 @@
           @if (zoomSeries.Source_Leaf_Type) {
           <span class="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{{ zoomSeries.Source_Leaf_Type }}</span>
           }
-          <span class="text-xs text-slate-400">{{ rangeText }}</span>
+          <span class="text-xs text-slate-400">{{ filterText }}</span>
         </div>
         <h3 class="mt-1.5 break-words text-base font-semibold text-slate-900">{{ zoomSeries.Display_Text }}</h3>
         <p class="mt-0.5 text-xs text-slate-500">
@@ -336,7 +401,7 @@
       </button>
     </div>
     <div class="overflow-auto px-4 py-4">
-      <app-cr-x-chart [series]="zoomSeries" [range]="range" [height]="520" [interactive]="true"></app-cr-x-chart>
+      <app-cr-x-chart [series]="zoomSeries" [height]="520" [interactive]="true"></app-cr-x-chart>
     </div>
   </div>
 </div>

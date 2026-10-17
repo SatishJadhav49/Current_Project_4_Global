@@ -22,9 +22,10 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
         /// Builds the correlation report: one series per active mapping of the parameter.
         /// Each application's reading SP (from MM_CR_Application) is called once with all
         /// of its mapped leaves; applications run in parallel on separate connections.
+        /// Either a date range or lastN (last N audits of each mapped item) is used.
         /// Returns null when the parameter does not exist.
         /// </summary>
-        public async Task<MM_CR_ReportDto?> GetReport(int crParameterId, DateTime fromDate, DateTime toDate)
+        public async Task<MM_CR_ReportDto?> GetReport(int crParameterId, DateTime? fromDate, DateTime? toDate, int? lastN)
         {
             var (parameter, mappings) = await GetReportMappings(crParameterId);
             if (parameter == null) return null;
@@ -32,8 +33,9 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
             var report = new MM_CR_ReportDto
             {
                 Parameter = parameter,
-                From_Date = fromDate.Date,
-                To_Date = toDate.Date
+                From_Date = lastN.HasValue ? null : fromDate?.Date,
+                To_Date = lastN.HasValue ? null : toDate?.Date,
+                Last_N = lastN
             };
 
             var series = mappings.Select(m => m.Series).ToList();
@@ -41,7 +43,7 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
 
             var appTasks = mappings
                 .GroupBy(m => m.Series.App_ID)
-                .Select(group => LoadApplicationReadings(group.ToList(), fromDate.Date, toDate.Date));
+                .Select(group => LoadApplicationReadings(group.ToList(), report.From_Date, report.To_Date, lastN));
 
             await Task.WhenAll(appTasks);
 
@@ -105,7 +107,7 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
         /// Runs one application's reading SP for all its mapped leaves and distributes
         /// the rows to the matching series. A failure only marks this application's series.
         /// </summary>
-        private async Task LoadApplicationReadings(List<ReportMapping> appMappings, DateTime fromDate, DateTime toDate)
+        private async Task LoadApplicationReadings(List<ReportMapping> appMappings, DateTime? fromDate, DateTime? toDate, int? lastN)
         {
             var spName = appMappings[0].Reading_SP_Name;
             if (string.IsNullOrWhiteSpace(spName))
@@ -146,8 +148,9 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                     TypeName = "dbo.MM_CR_LeafList",
                     Value = leaves
                 });
-                command.Parameters.Add(new SqlParameter("@From_Date", SqlDbType.Date) { Value = fromDate });
-                command.Parameters.Add(new SqlParameter("@To_Date", SqlDbType.Date) { Value = toDate });
+                command.Parameters.Add(new SqlParameter("@From_Date", SqlDbType.Date) { Value = (object?)fromDate ?? DBNull.Value });
+                command.Parameters.Add(new SqlParameter("@To_Date", SqlDbType.Date) { Value = (object?)toDate ?? DBNull.Value });
+                command.Parameters.Add(new SqlParameter("@Last_N", SqlDbType.Int) { Value = (object?)lastN ?? DBNull.Value });
 
                 using var reader = await command.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
@@ -172,12 +175,10 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                     });
                 }
 
+                // Stable sort by date only - keeps the SP order (audit, reading no) within a date
                 foreach (var series in seriesByLeaf.Values)
                 {
-                    series.Points = series.Points
-                        .OrderBy(p => p.Audit_Date)
-                        .ThenBy(p => p.Reading_No)
-                        .ToList();
+                    series.Points = series.Points.OrderBy(p => p.Audit_Date).ToList();
                 }
             }
             catch (Exception ex)

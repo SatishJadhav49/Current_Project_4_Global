@@ -137,3 +137,29 @@ EXEC dbo.SP_CR_Get_Readings_1D @Leaves = @L, @From_Date = '2026-09-01', @To_Date
 - [ ] Out-of-spec points are red; a spec change gives a stepped line with values only at the start and end
 - [ ] The zoom icon opens the large chart with zoom / pan / reset
 - [ ] Excel (summary + one sheet per item) and PDF (charts + stats) download
+
+---
+
+## 8. Report update (2026-10-17): parameter search, reading-sequence axis, Last N audits
+
+**SQL:** **re-run `SQL/07_Report.sql`** (whole file). The 3 reading SPs get a new optional `@Last_N` parameter. When it is set, the dates are ignored and the
+**last N audits of each mapped item** (with all their readings) are returned. Date mode works as before.
+
+**What changed**
+- **Parameter dropdown is searchable:** type to filter, Enter picks the first match, and parameters without a mapping are shown greyed out.
+- **X axis = reading sequence.** Only dates that have data appear. Reading1–3 of one audit are separate, evenly spaced points, each labelled with
+  the audit date (the date repeats), instead of sitting on one vertical line.
+- **New period option "Last N audits"** with a number box (1–1000). The heading, Excel and PDF show "Last N audits".
+
+**Files changed**
+- SQL: `07_Report.sql`
+- API: `Controllers/MM_CR_ReportController.cs`, `Data/MM_CR_ReportDataService.cs`, `Models/MM_CR_ReportDtos.cs`
+- UI `report/`: `correlation-report.component.ts|html`, `x-chart.component.ts`, `report-export.service.ts`, `report.model.ts`, `date-presets.ts`
+- UI: `correlation.service.ts`
+
+**Test a SP in Last N mode:**
+```sql
+DECLARE @L dbo.MM_CR_LeafList;
+INSERT INTO @L (Source_Leaf_ID, Source_Leaf_Type) VALUES (<Parameter_ID>, NULL);
+EXEC dbo.SP_CR_Get_Readings_Torque @Leaves = @L, @Last_N = 10;   -- 10 audits, up to 30 points
+```

@@ -3,7 +3,8 @@ export type DatePresetKey =
   | 'thisMonth'
   | 'lastMonth'
   | 'last3Months'
-  | 'custom';
+  | 'custom'
+  | 'lastN';
 
 export interface DatePreset {
   key: DatePresetKey;
@@ -16,13 +17,21 @@ export const DATE_PRESETS: DatePreset[] = [
   { key: 'lastMonth', label: 'Last month' },
   { key: 'last3Months', label: 'Last 3 months' },
   { key: 'custom', label: 'Custom range' },
+  { key: 'lastN', label: 'Last N audits' },
 ];
 
 /** Longest range the API accepts. */
 export const MAX_RANGE_DAYS = 366;
 
+/** "Last N audits" limits (the API accepts up to 1000). */
+export const DEFAULT_LAST_N = 10;
+export const MAX_LAST_N = 1000;
+
+/** Presets that resolve to fixed dates. */
+export type FixedPresetKey = Exclude<DatePresetKey, 'custom' | 'lastN'>;
+
 /** Resolves a preset to a from / to date (local dates, time stripped). */
-export function resolvePreset(key: Exclude<DatePresetKey, 'custom'>, today = new Date()): { from: Date; to: Date } {
+export function resolvePreset(key: FixedPresetKey, today = new Date()): { from: Date; to: Date } {
   const t = startOfDay(today);
 
   switch (key) {
