@@ -169,7 +169,6 @@ export class ReportExportService {
     ];
 
     report.Series.forEach((series) => {
-      const spec = this.specText(series);
       const block: any[] = [
         {
           text: [
@@ -177,8 +176,8 @@ export class ReportExportService {
             { text: series.Display_Text ?? '', bold: true },
           ],
           fontSize: 10,
+          margin: [0, 0, 0, 4],
         },
-        { text: spec, style: 'muted', color: '#e11d48', margin: [0, 2, 0, 4] },
       ];
 
       const image = images.get(series.Mapping_ID);
@@ -219,24 +218,6 @@ export class ReportExportService {
   }
 
   //*************************************** Helpers ***************************************//
-
-  specText(series: CrReportSeries): string {
-    const s = series.Stats;
-    const part = (label: string, start?: number | null, end?: number | null) => {
-      if ((start === null || start === undefined) && (end === null || end === undefined)) return '';
-      return start === end || end === null || end === undefined
-        ? `${label} ${this.num(start)}`
-        : `${label} ${this.num(start)} → ${this.num(end)}`;
-    };
-    return [part('LSL', s.LSL_Start, s.LSL_End), part('USL', s.USL_Start, s.USL_End)]
-      .filter(Boolean)
-      .join('   ');
-  }
-
-  private num(value: number | null | undefined): string {
-    if (value === null || value === undefined) return '-';
-    return Number(Number(value).toFixed(3)).toString();
-  }
 
   private fileBase(parameterName: string): string {
     const safe = parameterName.replace(/[^A-Za-z0-9-_]+/g, '_').replace(/_+/g, '_').slice(0, 60);

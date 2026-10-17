@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-7xl p-4 sm:p-6">
+<div class="p-4 sm:p-6">
   <!-- Page header -->
   <div class="mb-6">
     <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Correlation · Reports</p>
@@ -265,9 +265,9 @@
     <!-- Legend -->
     <div class="hidden items-center gap-4 pb-2 text-xs text-slate-500 sm:flex">
       @if (activeChart === 'histogram') {
-      <span class="inline-flex items-center gap-1.5"><span class="h-3 w-2.5 rounded-sm bg-indigo-600"></span>Readings</span>
-      <span class="inline-flex items-center gap-1.5"><span class="h-3 border-l-2 border-dashed border-rose-600"></span>LSL / USL</span>
-      <span class="inline-flex items-center gap-1.5"><span class="h-3 w-2.5 rounded-sm bg-red-600"></span>Out of spec</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-3 w-2.5 rounded-sm bg-[#7cb5ec]"></span>Frequency</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-0.5 w-4 rounded bg-[#1976d2]"></span>Normal curve</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-3 border-l-2 border-dashed border-[#d32f2f]"></span>LSL / USL</span>
       } @else {
       <span class="inline-flex items-center gap-1.5"><span class="h-0.5 w-4 rounded bg-indigo-600"></span>Reading</span>
       <span class="inline-flex items-center gap-1.5"><span class="w-4 border-t-2 border-dashed border-rose-600"></span>LSL / USL</span>
@@ -296,9 +296,6 @@
           <h3 class="mt-1.5 truncate text-sm font-semibold text-slate-900" [title]="item.Display_Text">
             {{ item.Display_Text }}
           </h3>
-          @if (specText(item); as spec) {
-          <p class="mt-0.5 text-xs font-medium text-rose-600">{{ spec }}</p>
-          }
         </div>
         <button
           type="button"
@@ -357,7 +354,6 @@
         </div>
         <h3 class="mt-1.5 break-words text-base font-semibold text-slate-900">{{ zoomSeries.Display_Text }}</h3>
         <p class="mt-0.5 text-xs text-slate-500">
-          @if (specText(zoomSeries); as spec) { <span class="font-medium text-rose-600">{{ spec }}</span> · }
           Drag on the chart to zoom, use the toolbar to pan / reset
         </p>
       </div>

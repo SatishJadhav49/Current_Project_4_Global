@@ -292,10 +292,6 @@ export class CorrelationReportComponent implements OnInit {
     return this.report?.Last_N ? 'No audits found for this item' : 'No readings in the selected date range';
   }
 
-  specText(series: CrReportSeries): string {
-    return this.exportService.specText(series);
-  }
-
   //*************************************** Zoom ***************************************//
 
   openZoom(series: CrReportSeries): void {

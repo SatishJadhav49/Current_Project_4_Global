@@ -206,3 +206,12 @@ EXEC dbo.SP_CR_Get_Readings_Torque @Leaves = @L, @Last_N = 10;   -- 10 audits, u
 - SQL: `07_Report.sql`
 - API: `Data/MM_CR_ReportDataService.cs`, `Models/MM_CR_ReportDtos.cs`
 - UI `report/`: `histogram-chart.component.ts`, `x-chart.component.ts`, `correlation-report.component.ts|html`, `report-export.service.ts`, `report.model.ts`
+
+---
+
+## 11. Report update (2026-10-17): LSL / USL removed from chart headers
+
+**UI only.** The LSL / USL text line is removed from the card header, the zoom pop-up header and the PDF card heading, because the values are already on the charts.
+The Histogram tab legend now matches the chart (Frequency, Normal curve, LSL / USL).
+
+**Files:** `report/correlation-report.component.ts|html`, `report/report-export.service.ts`
