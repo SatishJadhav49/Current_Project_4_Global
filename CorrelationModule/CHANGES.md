@@ -163,3 +163,20 @@ DECLARE @L dbo.MM_CR_LeafList;
 INSERT INTO @L (Source_Leaf_ID, Source_Leaf_Type) VALUES (<Parameter_ID>, NULL);
 EXEC dbo.SP_CR_Get_Readings_Torque @Leaves = @L, @Last_N = 10;   -- 10 audits, up to 30 points
 ```
+
+---
+
+## 9. Report update (2026-10-17): Histogram tab, stats bar removed
+
+**No SQL / API change**: UI only.
+
+- The card stats bar (n / Mean / Min / Max / Out of spec) is removed from the cards, the zoom pop-up and the PDF.
+- New graph tab **Histogram** next to **X Chart**. The same cards are used, and only the chart inside switches.
+  - Readings are grouped into equal-width bins (~√n bins, 5–20). The range always includes LSL / USL.
+  - LSL / USL (latest spec of the period) are drawn as dashed vertical lines with labels.
+  - Bins whose centre lies outside the spec are red; the count is shown above each bar (when ≤ 12 bins); the tooltip shows the bin range, count and %.
+  - Zoom pop-up and PDF export follow the active tab (the PDF title says "X Chart" or "Histogram").
+
+**Files**
+- New: `report/histogram-chart.component.ts`, `report/report-chart.ts` (shared chart contract + colours)
+- Changed: `report/chart-types.ts`, `report/x-chart.component.ts`, `report/correlation-report.component.ts|html`, `report/report-export.service.ts`

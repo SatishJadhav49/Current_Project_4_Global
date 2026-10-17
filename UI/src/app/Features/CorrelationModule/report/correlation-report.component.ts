@@ -27,16 +27,19 @@ import {
   toIsoDate,
 } from './date-presets';
 import { XChartComponent } from './x-chart.component';
+import { HistogramChartComponent } from './histogram-chart.component';
+import { ReportChart } from './report-chart';
 import { ReportExportService } from './report-export.service';
 
 @Component({
   selector: 'app-correlation-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, XChartComponent],
+  imports: [CommonModule, FormsModule, XChartComponent, HistogramChartComponent],
   templateUrl: './correlation-report.component.html',
 })
 export class CorrelationReportComponent implements OnInit {
-  @ViewChildren('cardChart') cardCharts?: QueryList<XChartComponent>;
+  /** Charts of the active graph tab (X Chart / Histogram) - used by the PDF export. */
+  @ViewChildren('cardChart') cardCharts?: QueryList<ReportChart>;
   @ViewChild('parameterPicker') parameterPicker?: ElementRef<HTMLElement>;
   @ViewChild('parameterSearchInput') parameterSearchInput?: ElementRef<HTMLInputElement>;
 
@@ -277,6 +280,10 @@ export class CorrelationReportComponent implements OnInit {
     return new Set(this.series.map((s) => s.App_ID)).size;
   }
 
+  get activeChartLabel(): string {
+    return this.chartTypes.find((c) => c.key === this.activeChart)?.label ?? '';
+  }
+
   get emptyReadingsText(): string {
     return this.report?.Last_N ? 'No audits found for this item' : 'No readings in the selected date range';
   }
@@ -323,7 +330,7 @@ export class CorrelationReportComponent implements OnInit {
         const image = await chart.getImage();
         if (image) images.set(chart.mappingId, image);
       }
-      await this.exportService.exportPdf(this.report, this.filterText, images);
+      await this.exportService.exportPdf(this.report, this.filterText, images, this.activeChartLabel);
     } catch (error) {
       console.error('Correlation PDF export failed', error);
       this.toastService.showError('Export Failed', 'Unable to create the PDF file.');

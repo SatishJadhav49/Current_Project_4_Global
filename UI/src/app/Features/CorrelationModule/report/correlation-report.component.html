@@ -274,9 +274,15 @@
 
     <!-- Legend -->
     <div class="hidden items-center gap-4 pb-2 text-xs text-slate-500 sm:flex">
+      @if (activeChart === 'histogram') {
+      <span class="inline-flex items-center gap-1.5"><span class="h-3 w-2.5 rounded-sm bg-indigo-600"></span>Readings</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-3 border-l-2 border-dashed border-rose-600"></span>LSL / USL</span>
+      <span class="inline-flex items-center gap-1.5"><span class="h-3 w-2.5 rounded-sm bg-red-600"></span>Out of spec</span>
+      } @else {
       <span class="inline-flex items-center gap-1.5"><span class="h-0.5 w-4 rounded bg-indigo-600"></span>Reading</span>
       <span class="inline-flex items-center gap-1.5"><span class="w-4 border-t-2 border-dashed border-rose-600"></span>LSL / USL</span>
       <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-white"></span>Out of spec</span>
+      }
     </div>
   </div>
 
@@ -285,8 +291,6 @@
     This parameter has no mapped items.
   </div>
   } @else {
-  @switch (activeChart) {
-  @case ('xchart') {
   <div class="grid grid-cols-1 gap-4 xl:grid-cols-2" [class.opacity-60]="loading">
     @for (item of series; track item.Mapping_ID) {
     <article class="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -328,14 +332,19 @@
           {{ emptyReadingsText }}
         </div>
         } @else {
+        @switch (activeChart) {
+        @case ('histogram') {
+        <app-cr-histogram-chart #cardChart [series]="item" [height]="260"></app-cr-histogram-chart>
+        }
+        @default {
         <app-cr-x-chart #cardChart [series]="item" [height]="260"></app-cr-x-chart>
+        }
+        }
         }
       </div>
     </article>
     }
   </div>
-  }
-  }
   }
   }
 </div>
@@ -351,7 +360,7 @@
           @if (zoomSeries.Source_Leaf_Type) {
           <span class="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{{ zoomSeries.Source_Leaf_Type }}</span>
           }
-          <span class="text-xs text-slate-400">{{ filterText }}</span>
+          <span class="text-xs text-slate-400">{{ activeChartLabel }} · {{ filterText }}</span>
         </div>
         <h3 class="mt-1.5 break-words text-base font-semibold text-slate-900">{{ zoomSeries.Display_Text }}</h3>
         <p class="mt-0.5 text-xs text-slate-500">
@@ -371,7 +380,14 @@
       </button>
     </div>
     <div class="overflow-auto px-4 py-4">
+      @switch (activeChart) {
+      @case ('histogram') {
+      <app-cr-histogram-chart [series]="zoomSeries" [height]="520" [interactive]="true"></app-cr-histogram-chart>
+      }
+      @default {
       <app-cr-x-chart [series]="zoomSeries" [height]="520" [interactive]="true"></app-cr-x-chart>
+      }
+      }
     </div>
   </div>
 </div>

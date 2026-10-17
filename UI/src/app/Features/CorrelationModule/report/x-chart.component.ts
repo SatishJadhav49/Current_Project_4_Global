@@ -10,15 +10,10 @@ import {
 } from '@angular/core';
 import ApexCharts from 'apexcharts';
 import { CrReadingPoint, CrReportSeries } from './report.model';
+import { CHART_COLORS as COLORS, ReportChart, formatValue } from './report-chart';
 
 type LimitKey = 'LSL' | 'USL';
 type XYPoint = { x: number; y: number | null };
-
-const COLORS = {
-  reading: '#4f46e5',
-  limit: '#e11d48',
-  outOfSpec: '#dc2626',
-};
 
 /**
  * X Chart (individual readings) of one mapped item.
@@ -32,7 +27,7 @@ const COLORS = {
   standalone: true,
   template: `<div #chartHost class="w-full"></div>`,
 })
-export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class XChartComponent implements ReportChart, AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('chartHost', { static: true }) chartHost!: ElementRef<HTMLDivElement>;
 
   @Input({ required: true }) series!: CrReportSeries;
@@ -293,8 +288,7 @@ export class XChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private format(value: number | null | undefined): string {
-    if (value === null || value === undefined || isNaN(value)) return '-';
-    return Number(value.toFixed(3)).toString();
+    return formatValue(value);
   }
 
   private round(value: number): number {

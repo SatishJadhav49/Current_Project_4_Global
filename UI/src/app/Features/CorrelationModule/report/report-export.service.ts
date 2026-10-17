@@ -145,7 +145,7 @@ export class ReportExportService {
   /**
    * @param images chart PNG per Mapping_ID (from the rendered X charts)
    */
-  async exportPdf(report: CrReport, rangeText: string, images: Map<number, string>): Promise<void> {
+  async exportPdf(report: CrReport, rangeText: string, images: Map<number, string>, chartLabel = 'X Chart'): Promise<void> {
     // Loaded on demand - keeps pdfmake out of the page bundle
     const pdfMakeModule: any = await import('pdfmake/build/pdfmake');
     const fontsModule: any = await import('pdfmake/build/vfs_fonts');
@@ -155,7 +155,7 @@ export class ReportExportService {
 
     const parameterName = report.Parameter?.Parameter_Name ?? '';
     const content: any[] = [
-      { text: 'Correlation Report', style: 'title' },
+      { text: `Correlation Report · ${chartLabel}`, style: 'title' },
       {
         columns: [
           { text: [{ text: 'Parameter: ', style: 'muted' }, { text: parameterName, bold: true }] },
