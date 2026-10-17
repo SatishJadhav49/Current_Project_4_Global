@@ -167,7 +167,6 @@ export class ReportExportService {
     ];
 
     report.Series.forEach((series) => {
-      const s = series.Stats;
       const spec = this.specText(series);
       const block: any[] = [
         {
@@ -177,15 +176,7 @@ export class ReportExportService {
           ],
           fontSize: 10,
         },
-        {
-          text: [
-            spec ? `${spec}    ` : '',
-            `n ${s.Count}    Mean ${this.num(s.Mean)}    Min ${this.num(s.Min)}    Max ${this.num(s.Max)}    `,
-            { text: `Out of spec ${s.Out_Of_Spec_Count}`, color: s.Out_Of_Spec_Count ? '#dc2626' : '#334155', bold: s.Out_Of_Spec_Count > 0 },
-          ],
-          style: 'muted',
-          margin: [0, 2, 0, 4],
-        },
+        { text: spec, style: 'muted', color: '#e11d48', margin: [0, 2, 0, 4] },
       ];
 
       const image = images.get(series.Mapping_ID);

@@ -319,34 +319,6 @@
         </button>
       </header>
 
-      <!-- Stats -->
-      @if (item.Stats.Count) {
-      <div class="grid grid-cols-5 divide-x divide-slate-100 border-b border-slate-100 text-center">
-        <div class="px-2 py-2">
-          <div class="text-[10px] uppercase tracking-wide text-slate-400">n</div>
-          <div class="text-sm font-semibold text-slate-800">{{ item.Stats.Count }}</div>
-        </div>
-        <div class="px-2 py-2">
-          <div class="text-[10px] uppercase tracking-wide text-slate-400">Mean</div>
-          <div class="text-sm font-semibold text-slate-800">{{ formatNumber(item.Stats.Mean) }}</div>
-        </div>
-        <div class="px-2 py-2">
-          <div class="text-[10px] uppercase tracking-wide text-slate-400">Min</div>
-          <div class="text-sm font-semibold text-slate-800">{{ formatNumber(item.Stats.Min) }}</div>
-        </div>
-        <div class="px-2 py-2">
-          <div class="text-[10px] uppercase tracking-wide text-slate-400">Max</div>
-          <div class="text-sm font-semibold text-slate-800">{{ formatNumber(item.Stats.Max) }}</div>
-        </div>
-        <div class="px-2 py-2">
-          <div class="text-[10px] uppercase tracking-wide text-slate-400">Out of spec</div>
-          <div class="text-sm font-semibold" [ngClass]="item.Stats.Out_Of_Spec_Count ? 'text-red-600' : 'text-emerald-600'">
-            {{ item.Stats.Out_Of_Spec_Count }}
-          </div>
-        </div>
-      </div>
-      }
-
       <!-- Chart -->
       <div class="flex-1 px-2 pb-2 pt-3">
         @if (item.Error) {
@@ -384,9 +356,7 @@
         <h3 class="mt-1.5 break-words text-base font-semibold text-slate-900">{{ zoomSeries.Display_Text }}</h3>
         <p class="mt-0.5 text-xs text-slate-500">
           @if (specText(zoomSeries); as spec) { <span class="font-medium text-rose-600">{{ spec }}</span> · }
-          n {{ zoomSeries.Stats.Count }} · Mean {{ formatNumber(zoomSeries.Stats.Mean) }} ·
-          <span [class.text-red-600]="zoomSeries.Stats.Out_Of_Spec_Count">Out of spec {{ zoomSeries.Stats.Out_Of_Spec_Count }}</span>
-          · Drag on the chart to zoom, use the toolbar to pan / reset
+          Drag on the chart to zoom, use the toolbar to pan / reset
         </p>
       </div>
       <button

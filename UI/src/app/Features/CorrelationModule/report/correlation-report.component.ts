@@ -285,11 +285,6 @@ export class CorrelationReportComponent implements OnInit {
     return this.exportService.specText(series);
   }
 
-  formatNumber(value: number | null | undefined): string {
-    if (value === null || value === undefined) return '-';
-    return Number(Number(value).toFixed(3)).toString();
-  }
-
   //*************************************** Zoom ***************************************//
 
   openZoom(series: CrReportSeries): void {
