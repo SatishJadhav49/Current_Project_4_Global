@@ -14,6 +14,7 @@ import {
   CrResult,
   CrUnmap,
 } from './correlation.model';
+import { CrReport } from './report/report.model';
 
 @Injectable({
   providedIn: 'root',
@@ -74,6 +75,16 @@ export class CorrelationService {
       `${this.baseUrl}Unmap`,
       this.withUser(unmap)
     );
+  }
+
+  //*************************************** Report ***************************************//
+
+  getReport(crParameterId: number, fromDate: string, toDate: string): Observable<CrReport> {
+    const params = new HttpParams()
+      .set('crParameterId', crParameterId)
+      .set('fromDate', fromDate)
+      .set('toDate', toDate);
+    return this.apiRequest.get('MM_CR_Report/GetReport', params);
   }
 
   /** Stamps the logged-in user and host, same as the other masters. */

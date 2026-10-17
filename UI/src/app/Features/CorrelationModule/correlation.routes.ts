@@ -15,5 +15,13 @@ export const CorrelationRoutes: Routes = [
         (m) => m.ParameterMappingComponent
       ),
   },
+  {
+    // Shown under the Reports menu (MM_Sub_Menus.ActionName = 'correlation/correlationreport')
+    path: 'correlationreport',
+    loadComponent: () =>
+      import('./report/correlation-report.component').then(
+        (m) => m.CorrelationReportComponent
+      ),
+  },
   { path: '', redirectTo: 'mapping-master', pathMatch: 'full' },
 ];

@@ -22,7 +22,9 @@
             "tsConfig": "tsconfig.app.json",
             "allowedCommonJsDependencies": [
               "exceljs",
-              "file-saver"
+              "file-saver",
+              "pdfmake/build/pdfmake",
+              "pdfmake/build/vfs_fonts"
             ],
             "assets": [
               {

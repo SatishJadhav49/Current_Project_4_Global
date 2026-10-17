@@ -99,3 +99,41 @@ A fresh install only needs 01–05, which already include this change.
 - UI: `correlation.model.ts`, `parameter-mapping/parameter-mapping.component.ts`
 
 **Check:** for a location with both measures, open 1D BIW. You should see 2 rows (Gap, Flush). Map only Gap and confirm Flush stays Available.
+
+---
+
+## 7. Phase 2 (2026-10-17): Correlation Report
+
+**SQL:** run `SQL/07_Report.sql` (whole file, F5) after 01–06. It adds `MM_CR_Application.Reading_SP_Name`, the reading SPs
+`SP_CR_Get_Readings_1D`, `SP_CR_Get_Readings_Torque` and `SP_CR_Get_Readings_EST_GD`, and `SP_CR_Get_Report_Mappings`.
+The last result grid must show **OK** for every application.
+
+**Menu:** add the submenu under the **Reports** menu with **ActionName = `correlation/correlationreport`** (LinkName as you like, e.g. "Correlation Report").
+
+**New files**
+- API `CorrelationModule/`: `Controllers/MM_CR_ReportController.cs`, `Data/MM_CR_ReportDataService.cs`, `Models/MM_CR_ReportDtos.cs`
+- UI `Features/CorrelationModule/report/`: `correlation-report.component.ts|html`, `x-chart.component.ts`, `report-export.service.ts`, `report.model.ts`, `date-presets.ts`, `chart-types.ts`
+
+**Edited files**
+| File | Change |
+|---|---|
+| `API_PQ_Global_Reporting/Program.cs` | +1 line `AddScoped<...MM_CR_ReportDataService>()` |
+| `UI/.../CorrelationModule/correlation.routes.ts` | +1 route `correlationreport` |
+| `UI/.../CorrelationModule/correlation.service.ts` | +`getReport()` |
+| `UI/angular.json` | `pdfmake` added to `allowedCommonJsDependencies` (removes build warning only) |
+
+**Test single SPs in SSMS** (Leaf type: `N'Gap'` / `N'Flush'` for 1D, NULL otherwise):
+```sql
+DECLARE @L dbo.MM_CR_LeafList;
+INSERT INTO @L (Source_Leaf_ID, Source_Leaf_Type) VALUES (<Location_ID>, N'Gap');
+EXEC dbo.SP_CR_Get_Readings_1D @Leaves = @L, @From_Date = '2026-09-01', @To_Date = '2026-10-17';
+```
+
+**Checklist**
+- [ ] Reports → Correlation Report opens; Model → Parameter (unmapped parameters disabled) → preset / custom dates → Generate
+- [ ] The parameter name and summary chips (items, readings, out of spec) appear under the filters
+- [ ] One card per mapped item with the app name, item, Gap/Flush tag, spec and stats; all charts share the same date axis
+- [ ] Torque / EST / GD show up to 3 points per audit (R1–R3 in the tooltip); empty readings are skipped
+- [ ] Out-of-spec points are red; a spec change gives a stepped line with values only at the start and end
+- [ ] The zoom icon opens the large chart with zoom / pan / reset
+- [ ] Excel (summary + one sheet per item) and PDF (charts + stats) download
