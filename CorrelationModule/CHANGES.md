@@ -264,3 +264,12 @@ Leaf_IDs that have an image, so each application is checked in one query.
 - SQL: `08_Images.sql`
 - API: `Data/MM_CR_ImageDataService.cs`, `Data/MM_CR_MappingDataService.cs`, `Data/MM_CR_ReportDataService.cs`, `Models/MM_CR_ReportDtos.cs`
 - UI: `parameter-mapping/parameter-mapping.component.ts|html`, `report/correlation-report.component.html`, `report/report.model.ts`, `correlation.model.ts`
+
+---
+
+## 14. Fix (2026-10-21): report thumbnail stayed a grey box
+
+The thumbnail `<img>` was `loading="lazy"` **and** hidden with `display:none` until loaded. Browsers never fetch a lazy image that has no layout box,
+so the request was never sent. It is now kept in the layout with `opacity-0` while loading. (The Mapping viewer was not affected: it does not lazy-load.)
+
+**File:** `UI/.../CorrelationModule/shared/image-thumb.component.ts` (UI only)

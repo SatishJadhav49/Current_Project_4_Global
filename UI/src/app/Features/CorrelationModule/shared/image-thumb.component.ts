@@ -17,14 +17,18 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
       [style.height.px]="height"
       [title]="state === 'loaded' ? 'View image' : state === 'error' ? 'No image' : ''"
     >
+      <!-- Kept in the layout while loading (opacity, not display:none):
+           browsers never fetch a lazy image that has no layout box -->
       <img
         [src]="src"
         [alt]="alt"
         loading="lazy"
+        decoding="async"
         (load)="state = 'loaded'"
         (error)="state = 'error'"
-        class="h-full w-full object-contain"
-        [class.hidden]="state !== 'loaded'"
+        class="h-full w-full object-contain transition-opacity duration-200"
+        [class.opacity-0]="state !== 'loaded'"
+        [class.hidden]="state === 'error'"
       />
       @if (state === 'loading') {
       <span class="absolute inset-0 animate-pulse bg-slate-100"></span>
