@@ -46,3 +46,15 @@ where sheet.Is_NA =0
 4. Use card type design, of each graph with application name and specifications name on top.
 5. on the top after filters show that parameter name which we have added.
 6. out of speicfication points should be highlight in red icon on the graph.
+
+
+<!-- Image Requirements -->
+1. We have images for each application and we need to show that image on the top of the graph with application name and specification name. The system should be designed to handle different image formats and sizes, ensuring that the images are displayed correctly across various devices and screen resolutions.
+2. Dont store images in our database, insted directly fetch it from the respective application database table.
+3. We have image in the DB table as filecontent, you can directly show it. Here is application wise logic where we have images.
+4. 1D TCF/BIW: select FileContent, Area_ID,Part_ID,Model_ID,Audit_Type_Id from MM_Image_Master where Part_ID=@Part_ID 
+5. EST/GD: select FileContent,Parameter_ID,Location_ID,Audit_Type_Id  from MM_Image_Master where Location_ID=@Location_ID
+6. Torque Audit: select FileContent, Parameter_ID from MM_Image_Master where Parameter_ID = @Parameter_ID
+7. Show this image view option in the master where user mapping points with parameter and also in the report page on the top of the graph with application name and specification name. The system should ensure that the images are displayed in a visually appealing manner, enhancing the overall user experience.
+8. On click zoom image to the full screen as per screen.
+9. The system should be designed to handle different image sizes, ensuring that the images are displayed correctly across various devices and screen resolutions.
