@@ -1,5 +1,6 @@
 import {
   Component,
+  ElementRef,
   EventEmitter,
   HostListener,
   Input,
@@ -7,6 +8,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 
 /** Image to show in the full-screen viewer. */
@@ -17,9 +19,9 @@ export interface CrViewerImage {
 }
 
 /**
- * Full-screen image viewer. The image is fitted to the screen (any size or
- * format the browser supports); Esc, the close button or a click on the
- * backdrop closes it.
+ * Full-screen image viewer. Every image - small or large - is scaled to the
+ * largest size that fits the screen while keeping its proportions, and is
+ * re-fitted on resize. Esc, the close button or a click on the backdrop closes it.
  */
 @Component({
   selector: 'app-cr-image-viewer',
@@ -52,7 +54,7 @@ export interface CrViewerImage {
       </div>
 
       <!-- Image, fitted to the screen -->
-      <div class="relative flex min-h-0 flex-1 items-center justify-center p-3 pb-6 sm:p-6">
+      <div #stage class="relative flex min-h-0 flex-1 items-center justify-center p-3 pb-6 sm:p-6">
         @if (state === 'loading') {
         <svg class="absolute h-8 w-8 animate-spin text-white/70" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -68,12 +70,15 @@ export interface CrViewerImage {
         </div>
         }
         <img
+          #img
           [src]="image.src"
           [alt]="image.title || 'Image'"
-          (load)="state = 'loaded'"
+          (load)="onLoad(img)"
           (error)="state = 'error'"
           (click)="$event.stopPropagation()"
-          class="max-h-full max-w-full rounded-lg bg-white object-contain shadow-2xl"
+          class="max-w-none rounded-lg bg-white object-contain shadow-2xl"
+          [style.width.px]="displayWidth"
+          [style.height.px]="displayHeight"
           [class.hidden]="state !== 'loaded'"
         />
       </div>
@@ -84,8 +89,16 @@ export class ImageViewerComponent implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) image!: CrViewerImage;
   @Output() closed = new EventEmitter<void>();
 
+  @ViewChild('stage', { static: true }) stage!: ElementRef<HTMLDivElement>;
+
   state: 'loading' | 'loaded' | 'error' = 'loading';
 
+  /** Size the image is drawn at - fitted to the screen, small images scaled up. */
+  displayWidth: number | null = null;
+  displayHeight: number | null = null;
+
+  private naturalWidth = 0;
+  private naturalHeight = 0;
   private previousOverflow = '';
 
   ngOnInit(): void {
@@ -96,6 +109,33 @@ export class ImageViewerComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnChanges(): void {
     this.state = 'loading';
+    this.displayWidth = this.displayHeight = null;
+  }
+
+  onLoad(img: HTMLImageElement): void {
+    this.naturalWidth = img.naturalWidth;
+    this.naturalHeight = img.naturalHeight;
+    this.fit();
+    this.state = 'loaded';
+  }
+
+  @HostListener('window:resize')
+  fit(): void {
+    if (!this.naturalWidth || !this.naturalHeight) return;
+
+    // Space inside the stage (its padding excluded)
+    const stage = this.stage.nativeElement;
+    const style = getComputedStyle(stage);
+    const availableWidth =
+      stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const availableHeight =
+      stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    if (availableWidth <= 0 || availableHeight <= 0) return;
+
+    // Same factor on both sides keeps the proportions; > 1 enlarges small images
+    const scale = Math.min(availableWidth / this.naturalWidth, availableHeight / this.naturalHeight);
+    this.displayWidth = Math.floor(this.naturalWidth * scale);
+    this.displayHeight = Math.floor(this.naturalHeight * scale);
   }
 
   ngOnDestroy(): void {

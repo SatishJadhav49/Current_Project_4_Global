@@ -273,3 +273,12 @@ The thumbnail `<img>` was `loading="lazy"` **and** hidden with `display:none` un
 so the request was never sent. It is now kept in the layout with `opacity-0` while loading. (The Mapping viewer was not affected: it does not lazy-load.)
 
 **File:** `UI/.../CorrelationModule/shared/image-thumb.component.ts` (UI only)
+
+---
+
+## 15. Image viewer (2026-10-21): small images enlarged to fit the screen
+
+The full-screen viewer now scales **every** image, small or large, to the largest size that fits the screen with its proportions kept
+(small uploads are enlarged instead of staying tiny). It re-fits when the window is resized. The card thumbnails already scaled up to their box.
+
+**File:** `UI/.../CorrelationModule/shared/image-viewer.component.ts` (UI only)
