@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiRequestService } from '../../services';
+import { ApiRequestService, AppConfig } from '../../services';
 import {
   CrApplication,
   CrMappingSave,
@@ -21,6 +21,7 @@ import { CrReport, CrReportFilter } from './report/report.model';
 })
 export class CorrelationService {
   private readonly apiRequest = inject(ApiRequestService);
+  private readonly appConfig = inject(AppConfig);
   private readonly baseUrl = 'MM_CR_Mapping/';
 
   getModels(): Observable<CrModel[]> {
@@ -86,6 +87,17 @@ export class CorrelationService {
         ? params.set('lastN', filter.lastN)
         : params.set('fromDate', filter.fromDate).set('toDate', filter.toDate);
     return this.apiRequest.get('MM_CR_Report/GetReport', params);
+  }
+
+  //*************************************** Images ***************************************//
+
+  /**
+   * URL of a mapped item's image - read live from the application's
+   * MM_Image_Master. Used directly as <img src>; the API answers 404 when
+   * the item has no image.
+   */
+  imageUrl(appId: number, leafId: number | string): string {
+    return `${this.appConfig.baseApiPath}MM_CR_Image/GetImage?appId=${appId}&leafId=${encodeURIComponent(String(leafId))}`;
   }
 
   /** Stamps the logged-in user and host, same as the other masters. */

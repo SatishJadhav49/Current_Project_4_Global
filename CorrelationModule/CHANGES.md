@@ -215,3 +215,36 @@ EXEC dbo.SP_CR_Get_Readings_Torque @Leaves = @L, @Last_N = 10;   -- 10 audits, u
 The Histogram tab legend now matches the chart (Frequency, Normal curve, LSL / USL).
 
 **Files:** `report/correlation-report.component.ts|html`, `report/report-export.service.ts`
+
+---
+
+## 12. Images (2026-10-21): view the source application's image in Mapping and Report
+
+Images are **not stored** in PQ_Dashboard_Master; they are read live from each application's `MM_Image_Master.FileContent`.
+
+**SQL:** run `SQL/08_Images.sql` (whole file, F5) after 01–07. The last grid must show **OK** per application.
+- Adds `MM_CR_Application.Image_SP_Name` (same registry pattern; a new app only needs its own image SP).
+- `SP_CR_Get_Image_1D`: Location → Checkpoint → **Part_ID** → `[1D_Module].dbo.MM_Image_Master` (an image of the same audit type / model is preferred).
+- `SP_CR_Get_Image_EST_GD`: by **Location_ID** in `[PQ_EST_GD].dbo.MM_Image_Master`.
+- `SP_CR_Get_Image_Torque`: by **Parameter_ID** in `[PQ_Torque_Audit].dbo.MM_Image_Master`.
+- `SP_CR_Get_Application_Image_SP`: lookup used by the API.
+
+**API:** `GET api/MM_CR_Image/GetImage?appId=&leafId=` returns the image file itself (content type detected from the bytes: PNG, JPEG, GIF, BMP,
+TIFF, WEBP, ICO, SVG; FileContent may be binary or base64 text) or **404** when the item has no image. It is cached by the browser for 10 min.
+
+**UI**
+- **Parameter Mapping:** new **Image** column with a view button on every row; it opens the full-screen viewer.
+- **Correlation Report:** each card header shows a **thumbnail** (lazy loaded) next to the application and item name; click opens the viewer.
+  Items without an image show a quiet placeholder.
+- **Viewer:** full screen, the image is fitted to the screen (any size, desktop / mobile); close with ✕, Esc or a click outside.
+
+**Files**
+- New: `SQL/08_Images.sql`; API `CorrelationModule/Controllers/MM_CR_ImageController.cs`, `CorrelationModule/Data/MM_CR_ImageDataService.cs`;
+  UI `CorrelationModule/shared/image-viewer.component.ts`, `CorrelationModule/shared/image-thumb.component.ts`
+- Changed: `Program.cs` (+1 `AddScoped<...MM_CR_ImageDataService>()`), `correlation.service.ts` (+`imageUrl()`),
+  `parameter-mapping/parameter-mapping.component.ts|html`, `report/correlation-report.component.ts|html`
+
+**Test an image SP in SSMS:**
+```sql
+EXEC dbo.SP_CR_Get_Image_1D @Leaf_ID = <Location_ID>;   -- returns FileContent
+```

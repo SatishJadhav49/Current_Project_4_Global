@@ -37,6 +37,7 @@ builder.Services.AddScoped<MM_Global_SearchDataService>();
 // Correlation Module - Parameter Mapping Master
 builder.Services.AddScoped<API_PQ_Global_Reporting.CorrelationModule.Data.MM_CR_MappingDataService>();
 builder.Services.AddScoped<API_PQ_Global_Reporting.CorrelationModule.Data.MM_CR_ReportDataService>();
+builder.Services.AddScoped<API_PQ_Global_Reporting.CorrelationModule.Data.MM_CR_ImageDataService>();
 
 builder.Services.AddScoped<MailNotificationService>();
 // Register Utils Services

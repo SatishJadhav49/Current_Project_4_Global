@@ -29,12 +29,21 @@ import {
 import { XChartComponent } from './x-chart.component';
 import { HistogramChartComponent } from './histogram-chart.component';
 import { ReportChart } from './report-chart';
+import { ImageThumbComponent } from '../shared/image-thumb.component';
+import { CrViewerImage, ImageViewerComponent } from '../shared/image-viewer.component';
 import { ReportExportService } from './report-export.service';
 
 @Component({
   selector: 'app-correlation-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, XChartComponent, HistogramChartComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    XChartComponent,
+    HistogramChartComponent,
+    ImageThumbComponent,
+    ImageViewerComponent,
+  ],
   templateUrl: './correlation-report.component.html',
 })
 export class CorrelationReportComponent implements OnInit {
@@ -71,6 +80,7 @@ export class CorrelationReportComponent implements OnInit {
   activeChart: ChartTypeKey = 'xchart';
 
   zoomSeries: CrReportSeries | null = null;
+  viewerImage: CrViewerImage | null = null;
   exporting: 'excel' | 'pdf' | null = null;
 
   private readonly modelStorageKey = 'CR_Model_ID';
@@ -88,6 +98,11 @@ export class CorrelationReportComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
+    // The image viewer sits on top - Esc closes only the viewer
+    if (this.viewerImage) {
+      this.viewerImage = null;
+      return;
+    }
     this.parameterOpen = false;
     this.closeZoom();
   }
@@ -290,6 +305,20 @@ export class CorrelationReportComponent implements OnInit {
 
   get emptyReadingsText(): string {
     return this.report?.Last_N ? 'No audits found for this item' : 'No readings in the selected date range';
+  }
+
+  //*************************************** Images ***************************************//
+
+  imageUrl(series: CrReportSeries): string {
+    return this.correlationService.imageUrl(series.App_ID, series.Source_Leaf_ID);
+  }
+
+  openImage(series: CrReportSeries): void {
+    this.viewerImage = {
+      src: this.imageUrl(series),
+      title: series.Display_Text,
+      subtitle: [series.App_Name, series.Source_Leaf_Type].filter(Boolean).join(' · '),
+    };
   }
 
   //*************************************** Zoom ***************************************//

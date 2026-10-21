@@ -12,13 +12,14 @@ import {
   CrParameter,
 } from '../correlation.model';
 import { ConfirmationService, ToastService } from '../../../services';
+import { CrViewerImage, ImageViewerComponent } from '../shared/image-viewer.component';
 
 type ViewFilter = 'all' | 'mapped' | 'unmapped';
 
 @Component({
   selector: 'app-parameter-mapping',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ImageViewerComponent],
   templateUrl: './parameter-mapping.component.html',
 })
 export class ParameterMappingComponent implements OnInit {
@@ -53,6 +54,9 @@ export class ParameterMappingComponent implements OnInit {
     { value: 'mapped', label: 'Mapped' },
     { value: 'unmapped', label: 'Unmapped' },
   ];
+
+  // Full-screen image of a row (read live from the application)
+  viewerImage: CrViewerImage | null = null;
 
   // Mappings of this parameter - source of truth for the "mapped" state
   mappings: CrMapping[] = [];
@@ -347,6 +351,23 @@ export class ParameterMappingComponent implements OnInit {
 
   mappedCount(appId: number): number {
     return this.mappedCountByApp.get(appId) ?? 0;
+  }
+
+  //*************************************** Image ***************************************//
+
+  openImage(row: CrMasterRow): void {
+    const app = this.selectedApp;
+    if (!app) return;
+
+    const title = this.isOrphan(row)
+      ? this.cellValue(row, 'Display_Text')
+      : this.cellValue(row, 'Display_Text') || this.cellValue(row, 'Leaf_Name');
+
+    this.viewerImage = {
+      src: this.correlationService.imageUrl(app.App_ID, this.cellValue(row, 'Leaf_ID')),
+      title: title || this.cellValue(row, 'Leaf_ID'),
+      subtitle: [app.App_Name, this.cellValue(row, 'Leaf_Type')].filter(Boolean).join(' · '),
+    };
   }
 
   //*************************************** Paging ***************************************//
