@@ -248,3 +248,19 @@ TIFF, WEBP, ICO, SVG; FileContent may be binary or base64 text) or **404** when 
 ```sql
 EXEC dbo.SP_CR_Get_Image_1D @Leaf_ID = <Location_ID>;   -- returns FileContent
 ```
+
+---
+
+## 13. Images (2026-10-21): icon only where an image exists
+
+**SQL:** **re-run `SQL/08_Images.sql`** (whole file). Each image SP now has a **list mode** (`@Leaf_ID` NULL + `@Leaves`): it returns the
+Leaf_IDs that have an image, so each application is checked in one query.
+
+**API:** master-data rows get `Has_Image`, and report series get `Has_Image`. If the check fails, it just returns "no images" (logged), so the page still loads.
+
+**UI:** the image button (Parameter Mapping) and the thumbnail (report card) appear **only when the item has an image**; otherwise nothing is shown.
+
+**Files**
+- SQL: `08_Images.sql`
+- API: `Data/MM_CR_ImageDataService.cs`, `Data/MM_CR_MappingDataService.cs`, `Data/MM_CR_ReportDataService.cs`, `Models/MM_CR_ReportDtos.cs`
+- UI: `parameter-mapping/parameter-mapping.component.ts|html`, `report/correlation-report.component.html`, `report/report.model.ts`, `correlation.model.ts`

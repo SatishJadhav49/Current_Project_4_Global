@@ -71,7 +71,8 @@ export interface CrParameterMappings {
 
 /**
  * One master-data row of a source application. Always carries Leaf_ID,
- * Leaf_Type (Gap / Flush for 1D, otherwise null), Leaf_Name, Source_Model_ID, Display_Text, Is_Mapped, Other_Parameters plus
+ * Leaf_Type (Gap / Flush for 1D, otherwise null), Leaf_Name, Source_Model_ID, Display_Text, Is_Mapped, Other_Parameters,
+ * Has_Image (the application has an image for the row) plus
  * the application specific columns described by CrApplication.Columns.
  */
 export type CrMasterRow = Record<string, unknown>;

@@ -37,6 +37,8 @@ export interface CrReportSeries {
   Error?: string | null;
   /** True when each point is the average of Reading1..3 (X-bar chart). */
   Is_Average?: boolean;
+  /** True when the source application has an image for this item. */
+  Has_Image?: boolean;
   Stats: CrReportStats;
   Points: CrReadingPoint[];
 }

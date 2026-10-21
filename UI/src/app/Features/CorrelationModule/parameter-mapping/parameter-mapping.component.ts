@@ -355,6 +355,11 @@ export class ParameterMappingComponent implements OnInit {
 
   //*************************************** Image ***************************************//
 
+  /** Set by the API only when the source application has an image for the row. */
+  hasImage(row: CrMasterRow): boolean {
+    return row['Has_Image'] === true;
+  }
+
   openImage(row: CrMasterRow): void {
     const app = this.selectedApp;
     if (!app) return;

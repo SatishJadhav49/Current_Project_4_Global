@@ -8,10 +8,12 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
     public class MM_CR_MappingDataService
     {
         private readonly IDbConnectionFactory _connectionFactory;
+        private readonly MM_CR_ImageDataService _imageDataService;
 
-        public MM_CR_MappingDataService(IDbConnectionFactory connectionFactory)
+        public MM_CR_MappingDataService(IDbConnectionFactory connectionFactory, MM_CR_ImageDataService imageDataService)
         {
             _connectionFactory = connectionFactory;
+            _imageDataService = imageDataService;
         }
 
         //*************************************** Lookups ***************************************//
@@ -293,6 +295,20 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
 
                     result.Rows.Add(row);
                 }
+            }
+
+            // 5. Which rows have an image in the application (image icon is shown only there)
+            var withImages = await _imageDataService.GetLeavesWithImages(
+                appId,
+                result.Rows
+                    .Select(row => row.GetValueOrDefault("Leaf_ID"))
+                    .Where(leaf => leaf != null)
+                    .Select(leaf => Convert.ToDecimal(leaf)));
+
+            foreach (var row in result.Rows)
+            {
+                var leaf = row.GetValueOrDefault("Leaf_ID");
+                row["Has_Image"] = leaf != null && withImages.Contains(Convert.ToDecimal(leaf));
             }
 
             return result;

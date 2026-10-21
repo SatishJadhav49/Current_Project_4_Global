@@ -16,10 +16,64 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
     public class MM_CR_ImageDataService
     {
         private readonly IDbConnectionFactory _connectionFactory;
+        private readonly ILogger<MM_CR_ImageDataService> _logger;
 
-        public MM_CR_ImageDataService(IDbConnectionFactory connectionFactory)
+        public MM_CR_ImageDataService(IDbConnectionFactory connectionFactory, ILogger<MM_CR_ImageDataService> logger)
         {
             _connectionFactory = connectionFactory;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Leaves (of one application) that have an image - one call to the image SP in
+        /// list mode. Used to show the image icon only where an image exists. Never throws:
+        /// on any problem it returns an empty set, so the screens simply show no icons.
+        /// </summary>
+        public async Task<HashSet<decimal>> GetLeavesWithImages(int appId, IEnumerable<decimal> leafIds)
+        {
+            var result = new HashSet<decimal>();
+            var distinctIds = leafIds.Distinct().ToList();
+            if (distinctIds.Count == 0) return result;
+
+            try
+            {
+                using var connection = await _connectionFactory.CreateConnectionAsync();
+
+                var imageSpName = await GetImageSpName(connection, appId);
+                if (string.IsNullOrWhiteSpace(imageSpName)) return result;
+
+                // Column order must match dbo.MM_CR_LeafList
+                var leaves = new DataTable();
+                leaves.Columns.Add("Source_Leaf_ID", typeof(decimal));
+                leaves.Columns.Add("Source_Leaf_Type", typeof(string));
+                leaves.Columns.Add("Source_Model_ID", typeof(decimal));
+                leaves.Columns.Add("Source_Display_Text", typeof(string));
+                distinctIds.ForEach(id => leaves.Rows.Add(id, DBNull.Value, DBNull.Value, DBNull.Value));
+
+                using var command = new SqlCommand(imageSpName, connection) { CommandType = CommandType.StoredProcedure };
+                command.Parameters.Add(new SqlParameter("@Leaf_ID", SqlDbType.Decimal) { Precision = 18, Scale = 0, Value = DBNull.Value });
+                command.Parameters.Add(new SqlParameter("@Leaves", SqlDbType.Structured)
+                {
+                    TypeName = "dbo.MM_CR_LeafList",
+                    Value = leaves
+                });
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    if (reader["Leaf_ID"] != DBNull.Value)
+                    {
+                        result.Add(Convert.ToDecimal(reader["Leaf_ID"]));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Correlation images: image check failed for application {AppId}", appId);
+                result.Clear();
+            }
+
+            return result;
         }
 
         /// <summary>Returns null when the application has no image SP or the leaf has no image.</summary>
@@ -28,13 +82,7 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
             using var connection = await _connectionFactory.CreateConnectionAsync();
 
             // 1. Application -> image SP name (validated to exist by the SP)
-            string? imageSpName;
-            using (var command = new SqlCommand("SP_CR_Get_Application_Image_SP", connection) { CommandType = CommandType.StoredProcedure })
-            {
-                command.Parameters.Add(new SqlParameter("@App_ID", appId));
-                imageSpName = (await command.ExecuteScalarAsync())?.ToString();
-            }
-
+            var imageSpName = await GetImageSpName(connection, appId);
             if (string.IsNullOrWhiteSpace(imageSpName)) return null;
 
             // 2. Image of the leaf
@@ -49,6 +97,13 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
             return bytes == null || bytes.Length == 0
                 ? null
                 : new MM_CR_Image(bytes, DetectContentType(bytes));
+        }
+
+        private static async Task<string?> GetImageSpName(SqlConnection connection, int appId)
+        {
+            using var command = new SqlCommand("SP_CR_Get_Application_Image_SP", connection) { CommandType = CommandType.StoredProcedure };
+            command.Parameters.Add(new SqlParameter("@App_ID", appId));
+            return (await command.ExecuteScalarAsync())?.ToString();
         }
 
         /// <summary>FileContent may be stored as binary or as a (data-URI) base64 string.</summary>

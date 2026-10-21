@@ -10,11 +10,16 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
         private const int ReadingCommandTimeoutSeconds = 120;
 
         private readonly IDbConnectionFactory _connectionFactory;
+        private readonly MM_CR_ImageDataService _imageDataService;
         private readonly ILogger<MM_CR_ReportDataService> _logger;
 
-        public MM_CR_ReportDataService(IDbConnectionFactory connectionFactory, ILogger<MM_CR_ReportDataService> logger)
+        public MM_CR_ReportDataService(
+            IDbConnectionFactory connectionFactory,
+            MM_CR_ImageDataService imageDataService,
+            ILogger<MM_CR_ReportDataService> logger)
         {
             _connectionFactory = connectionFactory;
+            _imageDataService = imageDataService;
             _logger = logger;
         }
 
@@ -43,7 +48,11 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
 
             var appTasks = mappings
                 .GroupBy(m => m.Series.App_ID)
-                .Select(group => LoadApplicationReadings(group.ToList(), report.From_Date, report.To_Date, lastN));
+                .SelectMany(group => new[]
+                {
+                    LoadApplicationReadings(group.ToList(), report.From_Date, report.To_Date, lastN),
+                    FlagImages(group.Key, group.Select(m => m.Series).ToList())
+                });
 
             await Task.WhenAll(appTasks);
 
@@ -202,6 +211,13 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                     m.Series.Error = "Unable to load readings for this application.";
                 });
             }
+        }
+
+        /// <summary>Marks the series whose item has an image in the source application.</summary>
+        private async Task FlagImages(int appId, List<MM_CR_ReportSeriesDto> appSeries)
+        {
+            var withImages = await _imageDataService.GetLeavesWithImages(appId, appSeries.Select(s => s.Source_Leaf_ID));
+            appSeries.ForEach(s => s.Has_Image = withImages.Contains(s.Source_Leaf_ID));
         }
 
         private static MM_CR_ReportStatsDto BuildStats(List<MM_CR_ReadingPointDto> points)

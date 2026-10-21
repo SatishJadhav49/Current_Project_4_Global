@@ -29,6 +29,9 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Models
         /// <summary>True when each point is the average of Reading1..3 (X-bar chart).</summary>
         public bool Is_Average { get; set; }
 
+        /// <summary>True when the source application has an image for this item.</summary>
+        public bool Has_Image { get; set; }
+
         public MM_CR_ReportStatsDto Stats { get; set; } = new();
         public List<MM_CR_ReadingPointDto> Points { get; set; } = new();
     }

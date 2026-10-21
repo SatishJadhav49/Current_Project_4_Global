@@ -8,10 +8,13 @@
    Images are NOT stored in PQ_Dashboard_Master - they are read live from
    each application's MM_Image_Master.FileContent.
 
-   IMAGE SP CONTRACT (every application must follow it):
-     Input  : @Leaf_ID DECIMAL(18,0)  - the mapped leaf (Location_ID / Parameter_ID)
-     Output : one row, column FileContent (image bytes, or a base64 string);
-              no row = no image
+   IMAGE SP CONTRACT (every application must follow it) - two modes:
+     1. Image mode  : @Leaf_ID = the leaf (Location_ID / Parameter_ID)
+                      -> one row, column FileContent (bytes or base64 string);
+                         no row = no image
+     2. List mode   : @Leaf_ID NULL, @Leaves = leaves to check
+                      -> column Leaf_ID for every leaf that HAS an image
+                         (used to show the image icon only where one exists)
    To add a new application later: create its image SP and set
    MM_CR_Application.Image_SP_Name - no API / UI change.
    ===================================================================== */
@@ -35,10 +38,23 @@ GO
       When a part has several images, the one of the same audit type
       (TCF / BIW) and model as the location is preferred.                  */
 CREATE OR ALTER PROCEDURE dbo.SP_CR_Get_Image_1D
-    @Leaf_ID DECIMAL(18,0)
+    @Leaf_ID DECIMAL(18,0) = NULL,
+    @Leaves  dbo.MM_CR_LeafList READONLY
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    IF @Leaf_ID IS NULL
+    BEGIN
+        -- List mode: leaves that have an image
+        SELECT DISTINCT l.Source_Leaf_ID AS Leaf_ID
+        FROM @Leaves l
+        JOIN [1D_Module].dbo.MM_LocationMaster loc   ON loc.Location_ID = l.Source_Leaf_ID
+        JOIN [1D_Module].dbo.MM_CheckpointMaster che ON che.Checkpoint_ID = loc.Checkpoint_ID
+        WHERE EXISTS (SELECT 1 FROM [1D_Module].dbo.MM_Image_Master img
+                      WHERE img.Part_ID = che.Part_ID AND img.FileContent IS NOT NULL);
+        RETURN;
+    END
 
     SELECT TOP 1 img.FileContent
     FROM [1D_Module].dbo.MM_LocationMaster loc
@@ -53,10 +69,21 @@ GO
 
 /* 3. EST / GD - image per Location (audit type of the location preferred) */
 CREATE OR ALTER PROCEDURE dbo.SP_CR_Get_Image_EST_GD
-    @Leaf_ID DECIMAL(18,0)
+    @Leaf_ID DECIMAL(18,0) = NULL,
+    @Leaves  dbo.MM_CR_LeafList READONLY
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    IF @Leaf_ID IS NULL
+    BEGIN
+        -- List mode: leaves that have an image
+        SELECT DISTINCT l.Source_Leaf_ID AS Leaf_ID
+        FROM @Leaves l
+        WHERE EXISTS (SELECT 1 FROM [PQ_EST_GD].dbo.MM_Image_Master img
+                      WHERE img.Location_ID = l.Source_Leaf_ID AND img.FileContent IS NOT NULL);
+        RETURN;
+    END
 
     SELECT TOP 1 img.FileContent
     FROM [PQ_EST_GD].dbo.MM_Image_Master img
@@ -69,10 +96,21 @@ GO
 
 /* 4. Torque - image per Parameter ---------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.SP_CR_Get_Image_Torque
-    @Leaf_ID DECIMAL(18,0)
+    @Leaf_ID DECIMAL(18,0) = NULL,
+    @Leaves  dbo.MM_CR_LeafList READONLY
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    IF @Leaf_ID IS NULL
+    BEGIN
+        -- List mode: leaves that have an image
+        SELECT DISTINCT l.Source_Leaf_ID AS Leaf_ID
+        FROM @Leaves l
+        WHERE EXISTS (SELECT 1 FROM [PQ_Torque_Audit].dbo.MM_Image_Master img
+                      WHERE img.Parameter_ID = l.Source_Leaf_ID AND img.FileContent IS NOT NULL);
+        RETURN;
+    END
 
     SELECT TOP 1 img.FileContent
     FROM [PQ_Torque_Audit].dbo.MM_Image_Master img
