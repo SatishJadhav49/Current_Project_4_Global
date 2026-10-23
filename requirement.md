@@ -58,3 +58,21 @@ where sheet.Is_NA =0
 7. Show this image view option in the master where user mapping points with parameter and also in the report page on the top of the graph with application name and specification name. The system should ensure that the images are displayed in a visually appealing manner, enhancing the overall user experience.
 8. On click zoom image to the full screen as per screen.
 9. The system should be designed to handle different image sizes, ensuring that the images are displayed correctly across various devices and screen resolutions.
+
+<!-- Addition of new applications -->
+1. CMM :
+select top 100 
+para.side, para.Parameter_Name, para.Point_Number, area.Area_Name, spec.Co_ordinate, spec.LSL, spec.USL, spec.IS_CTQ
+from MM_ParameterMaster para
+join MM_AreaMaster area on para.Area_ID = area.Area_ID
+join MM_Parameter_SpecDetails_Master spec on para.Parameter_ID = spec.Parameter_ID
+where para.Model_ID = @Model_ID
+
+
+- For reading take deviation 
+select top 100 audit.Audit_Date, sheet.Parameter_ID,sheet.Coordinate, Deviation, sheet.Specification_ID from MM_Audit_Sheet_Details sheet 
+join MM_ParameterMaster para on sheet.Parameter_ID = para.Parameter_ID
+join MM_Audit_Master audit on sheet.Audit_ID = audit.Audit_ID
+
+- No images,
+-  in this parameter will be the main along with co-ordinate. In the specification table there might be multiple values for the same paremeter and co-ordinate but fo the reading we need to take the reaidngs only form specification id join to sheet table. and for the mapping selection keep mentioned unique parameter and co-ordinate combination for the mapping purpose. also it like side, area, parameter name, point no, coordinate.
