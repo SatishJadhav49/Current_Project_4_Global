@@ -282,3 +282,27 @@ The full-screen viewer now scales **every** image, small or large, to the larges
 (small uploads are enlarged instead of staying tiny). It re-fits when the window is resized. The card thumbnails already scaled up to their box.
 
 **File:** `UI/.../CorrelationModule/shared/image-viewer.component.ts` (UI only)
+
+---
+
+## 16. New application: CMM (2026-10-23)
+
+**SQL only:** run `SQL/09_App_CMM.sql` (whole file, F5) after 01–08. **No API / UI change and no redeploy**; the CMM tab, grid and
+report cards come from the registry. The last grid must show Master_SP = OK, Reading_SP = OK, Grid_Columns = 5.
+
+- **Database:** `[PQ_CMM]` (no `Is_Active` on parameter / area, no `Is_NA` on the sheet; nothing filtered on them).
+- **Mapping item = Parameter + Co-ordinate.** `Source_Leaf_ID` = `Parameter_ID`, `Source_Leaf_Type` = co-ordinate (the same column 1D uses for
+  Gap / Flush). The spec table can repeat a parameter + co-ordinate; the grid shows each combination **once**.
+- **Grid columns:** Side · Area · Parameter · Point No · Co-ordinate (all filterable). New tab added **after GD** (change `Sort_Order` to move it).
+- **Readings:** `MM_Audit_Sheet_Details.Deviation`, one point per sheet row, matched on `Parameter_ID` + `Coordinate`. **LSL / USL come from the spec row
+  of that reading** (`sheet.Specification_ID`), so a spec change shows as a step. Date range and Last N audits both work.
+- **No images:** `Image_SP_Name` stays NULL, so no image icons for CMM.
+- Model match is by `Model_Name` via `[PQ_CMM].dbo.MM_Model`, like the other apps.
+
+**Test in SSMS**
+```sql
+EXEC dbo.SP_CR_Get_Master_CMM @Model_Name = N'<model name>';
+DECLARE @L dbo.MM_CR_LeafList;
+INSERT INTO @L (Source_Leaf_ID, Source_Leaf_Type) VALUES (<Parameter_ID>, N'<co-ordinate>');
+EXEC dbo.SP_CR_Get_Readings_CMM @Leaves = @L, @Last_N = 10;
+```
