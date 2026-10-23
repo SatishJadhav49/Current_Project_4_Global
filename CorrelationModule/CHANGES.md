@@ -306,3 +306,15 @@ DECLARE @L dbo.MM_CR_LeafList;
 INSERT INTO @L (Source_Leaf_ID, Source_Leaf_Type) VALUES (<Parameter_ID>, N'<co-ordinate>');
 EXEC dbo.SP_CR_Get_Readings_CMM @Leaves = @L, @Last_N = 10;
 ```
+
+---
+
+## 17. CMM (2026-10-23): CTQ column + ROW_ID fix kept in the script
+
+**SQL only:** **re-run `SQL/09_App_CMM.sql`** (whole file). No API / UI change. The verification grid now shows **Grid_Columns = 6**.
+
+- **ROW_ID fix:** the spec table key is `ROW_ID`, so readings join `spec.ROW_ID = sheet.Specification_ID`. This was fixed directly in SQL; it is now also in
+  the script, so a re-run keeps it.
+- **CTQ (Critical To Quality), view only:** the CMM master SP returns a `CTQ` column per Parameter + Co-ordinate: **"CTQ"** when `IS_CTQ = 1`
+  on any of its spec rows (the spec table can repeat the combination), empty otherwise. A **CTQ** grid column (filterable) is registered, so it
+  shows on the Mapping page after Co-ordinate. Type "CTQ" in its column filter to list only critical points.

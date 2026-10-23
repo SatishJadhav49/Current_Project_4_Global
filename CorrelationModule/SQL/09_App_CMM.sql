@@ -12,8 +12,9 @@
      Leaf_Type = co-ordinate (stored in MM_CR_Parameter_Mapping.Source_Leaf_Type,
                  the same column 1D uses for Gap / Flush)
    The spec table can hold several rows for one parameter + co-ordinate;
-   the master grid shows each combination once. Readings take LSL / USL
-   from the spec row joined through MM_Audit_Sheet_Details.Specification_ID.
+   the master grid shows each combination once (CTQ if any of its spec rows
+   has IS_CTQ = 1). Readings take LSL / USL from the spec row of the reading:
+   spec.ROW_ID (spec table key) = MM_Audit_Sheet_Details.Specification_ID.
    CMM has no Is_Active columns (parameter / area) and no Is_NA (sheet).
    No images for CMM (Image_SP_Name stays NULL - no image icons).
    ===================================================================== */
@@ -39,16 +40,25 @@ BEGIN
            para.Parameter_Name,
            para.Point_Number,
            c.Coordinate,
+           CASE WHEN c.Is_CTQ = 1 THEN 'CTQ' ELSE '' END AS CTQ,   -- Critical To Quality
            CONCAT(para.Side, ' > ', area.Area_Name, ' > ', para.Parameter_Name,
                   ' (Pt ', para.Point_Number, ') > ', c.Coordinate) AS Display_Text
     FROM [PQ_CMM].dbo.MM_ParameterMaster para
     JOIN [PQ_CMM].dbo.MM_AreaMaster area ON area.Area_ID = para.Area_ID
     JOIN (
-        -- unique parameter + co-ordinate (the spec table may repeat them)
-        SELECT DISTINCT spec.Parameter_ID,
-               CAST(NULLIF(LTRIM(RTRIM(CAST(spec.Co_ordinate AS NVARCHAR(50)))), N'') AS NVARCHAR(20)) AS Coordinate
-        FROM [PQ_CMM].dbo.MM_Parameter_SpecDetails_Master spec
-        WHERE spec.Co_ordinate IS NOT NULL
+        -- unique parameter + co-ordinate (the spec table may repeat them);
+        -- CTQ when any of its spec rows is flagged IS_CTQ
+        SELECT s.Parameter_ID,
+               s.Coordinate,
+               MAX(s.Is_CTQ) AS Is_CTQ
+        FROM (
+            SELECT spec.Parameter_ID,
+                   CAST(NULLIF(LTRIM(RTRIM(CAST(spec.Co_ordinate AS NVARCHAR(50)))), N'') AS NVARCHAR(20)) AS Coordinate,
+                   CASE WHEN spec.IS_CTQ = 1 THEN 1 ELSE 0 END AS Is_CTQ
+            FROM [PQ_CMM].dbo.MM_Parameter_SpecDetails_Master spec
+            WHERE spec.Co_ordinate IS NOT NULL
+        ) s
+        GROUP BY s.Parameter_ID, s.Coordinate
     ) c ON c.Parameter_ID = para.Parameter_ID
     WHERE c.Coordinate IS NOT NULL
       AND para.Model_ID IN (
@@ -90,7 +100,7 @@ BEGIN
                  OR LTRIM(RTRIM(CAST(sheet.Coordinate AS NVARCHAR(50)))) COLLATE DATABASE_DEFAULT = l.Source_Leaf_Type)
         JOIN [PQ_CMM].dbo.MM_Audit_Master audit ON audit.Audit_ID = sheet.Audit_ID
         -- spec of THIS reading (the spec table can have several rows per parameter + co-ordinate)
-        LEFT JOIN [PQ_CMM].dbo.MM_Parameter_SpecDetails_Master spec ON spec.Specification_ID = sheet.Specification_ID
+        LEFT JOIN [PQ_CMM].dbo.MM_Parameter_SpecDetails_Master spec ON spec.ROW_ID = sheet.Specification_ID
         WHERE TRY_CONVERT(DECIMAL(18,4), sheet.Deviation) IS NOT NULL
           AND (@Last_N IS NOT NULL
                OR (audit.Audit_Date >= @From_Date AND audit.Audit_Date < @To_Exclusive))
@@ -135,7 +145,8 @@ INSERT INTO @Columns VALUES
     ('Area_Name',      N'Area',        2),
     ('Parameter_Name', N'Parameter',   3),
     ('Point_Number',   N'Point No',    4),
-    ('Coordinate',     N'Co-ordinate', 5);
+    ('Coordinate',     N'Co-ordinate', 5),
+    ('CTQ',            N'CTQ',         6);
 
 INSERT INTO dbo.MM_CR_Application_Column (App_ID, Column_Key, Column_Header, Sort_Order, Is_Filterable, Is_Active)
 SELECT app.App_ID, c.Column_Key, c.Column_Header, c.Sort_Order, 1, 1
