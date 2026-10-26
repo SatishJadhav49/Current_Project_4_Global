@@ -76,3 +76,24 @@ join MM_Audit_Master audit on sheet.Audit_ID = audit.Audit_ID
 
 - No images,
 -  in this parameter will be the main along with co-ordinate. In the specification table there might be multiple values for the same paremeter and co-ordinate but fo the reading we need to take the reaidngs only form specification id join to sheet table. and for the mapping selection keep mentioned unique parameter and co-ordinate combination for the mapping purpose. also it like side, area, parameter name, point no, coordinate.
+
+
+2. Master Checker :
+select part.Part_Name, part.Is_LH, part.Is_RH, part.Is_Common, loc.Location_Name, loc.Is_Gap, loc.Is_Flush
+from 
+MM_Part_Master part 
+join MM_Location_Master  loc on part.Part_ID = loc.Part_ID
+where part.Model_ID = @Model_ID and part.Is_Active=1 and loc.Is_Active=1
+
+- For reading
+select audit.Audit_Date, sheet.Reading, spec.LSL, spec.USL, loc.Location_ID, spec.Spec_ID
+from MM_Audit_Sheet_Details sheet
+join MM_Audit_Master audit on sheet.Audit_ID= audit.Audit_ID
+join MM_Specification_Master spec on spec.Spec_ID = sheet.Spec_ID
+join MM_Location_Master loc on loc.Location_ID = spec.Location_ID
+where sheet.Is_NA <> 1
+
+- For images we have images stored in the application server folder and we have image name in the table MM_Image_Master for now ignore this later on we will at it.
+- database name - PQ_Master_Checker
+- for mapping , in the part master we have lh, rh & common flags . some times is_lh and is_rh both will be true so for  that in the side show both separate rows , so there will be this columns - part name , side, location name, gap/flush . and other coluns same as other
+
