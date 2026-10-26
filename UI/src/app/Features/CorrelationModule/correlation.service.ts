@@ -3,6 +3,7 @@ import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiRequestService, AppConfig } from '../../services';
 import {
+  CrAppOrder,
   CrApplication,
   CrMappingSave,
   CrMasterData,
@@ -28,8 +29,22 @@ export class CorrelationService {
     return this.apiRequest.get(`${this.baseUrl}GetModels`);
   }
 
-  getApplications(): Observable<CrApplication[]> {
-    return this.apiRequest.get(`${this.baseUrl}GetApplications`);
+  /** Active applications; with a parameter they follow its custom application order. */
+  getApplications(crParameterId?: number): Observable<CrApplication[]> {
+    const params = crParameterId ? new HttpParams().set('crParameterId', crParameterId) : undefined;
+    return this.apiRequest.get(`${this.baseUrl}GetApplications`, params);
+  }
+
+  getParameterAppOrder(crParameterId: number): Observable<CrAppOrder[]> {
+    return this.apiRequest.get(`${this.baseUrl}GetParameterAppOrder/${crParameterId}`);
+  }
+
+  /** App_IDs in the wanted order; an empty list resets to the default order. */
+  saveParameterAppOrder(crParameterId: number, appIds: number[]): Observable<CrResult> {
+    return this.apiRequest.postForGet(
+      `${this.baseUrl}SaveParameterAppOrder`,
+      this.withUser({ CR_Parameter_ID: crParameterId, App_IDs: appIds })
+    );
   }
 
   getParameters(modelId: number): Observable<CrParameter[]> {

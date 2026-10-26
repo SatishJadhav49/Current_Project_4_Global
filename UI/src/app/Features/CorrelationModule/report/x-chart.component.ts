@@ -116,7 +116,6 @@ export class XChartComponent implements ReportChart, AfterViewInit, OnChanges, O
     });
 
     const [yMin, yMax] = this.yBounds(points);
-    const maxTicks = this.interactive ? 24 : 10;
 
     return {
       chart: {
@@ -160,13 +159,15 @@ export class XChartComponent implements ReportChart, AfterViewInit, OnChanges, O
         type: 'numeric',
         min: count === 1 ? 0 : 1,
         max: count === 1 ? 2 : count,
-        tickAmount: count <= 1 ? 2 : Math.min(count - 1, maxTicks),
+        // one tick per reading - every point's date is printed under the axis
+        tickAmount: count <= 1 ? 2 : count - 1,
         decimalsInFloat: 0,
         labels: {
           rotate: -45,
           rotateAlways: count > 6,
-          hideOverlappingLabels: true,
-          style: { colors: '#64748b', fontSize: '10px' },
+          hideOverlappingLabels: false,
+          trim: false,
+          style: { colors: '#64748b', fontSize: count > 40 ? '8px' : '9px' },
           formatter: (value: string) => {
             const index = Math.round(Number(value)) - 1;
             return index >= 0 && index < count ? dateLabels[index] : '';

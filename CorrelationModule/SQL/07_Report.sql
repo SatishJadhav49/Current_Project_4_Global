@@ -236,10 +236,13 @@ BEGIN
            m.Source_Display_Text
     FROM dbo.MM_CR_Parameter_Mapping m
     JOIN dbo.MM_CR_Application a ON a.App_ID = m.App_ID
+    LEFT JOIN dbo.MM_CR_Parameter_App_Order o
+           ON o.CR_Parameter_ID = m.CR_Parameter_ID AND o.App_ID = m.App_ID
     WHERE m.CR_Parameter_ID = @CR_Parameter_ID
       AND m.Is_Active = 1
       AND a.Is_Active = 1
-    ORDER BY a.Sort_Order, m.Source_Display_Text;
+    -- the parameter's custom application order (report cards follow it), else default
+    ORDER BY CASE WHEN o.Sort_Order IS NULL THEN 1 ELSE 0 END, o.Sort_Order, a.Sort_Order, m.Source_Display_Text;
 END
 GO
 

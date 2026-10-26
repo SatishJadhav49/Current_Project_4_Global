@@ -38,12 +38,14 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
             return models;
         }
 
-        public async Task<List<MM_CR_ApplicationDto>> GetApplications()
+        /// <summary>Active applications; with a parameter they follow its custom application order.</summary>
+        public async Task<List<MM_CR_ApplicationDto>> GetApplications(int? crParameterId = null)
         {
             var applications = new List<MM_CR_ApplicationDto>();
 
             using var connection = await _connectionFactory.CreateConnectionAsync();
             using var command = CreateSpCommand("SP_CR_Get_Applications", connection);
+            command.Parameters.Add(new SqlParameter("@CR_Parameter_ID", crParameterId.HasValue ? crParameterId.Value : DBNull.Value));
             using var reader = await command.ExecuteReaderAsync();
 
             // Result Set 1 - Applications
@@ -344,6 +346,56 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Data
                 Value = leaves
             });
             AddUserParameters(command, mapping.User_ID, mapping.Host);
+
+            return await ExecuteResultAsync(command);
+        }
+
+        //*************************************** Application order ***************************************//
+
+        public async Task<List<MM_CR_AppOrderDto>> GetParameterAppOrder(int crParameterId)
+        {
+            var apps = new List<MM_CR_AppOrderDto>();
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = CreateSpCommand("SP_CR_Get_Parameter_App_Order", connection);
+            command.Parameters.Add(new SqlParameter("@CR_Parameter_ID", crParameterId));
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                apps.Add(new MM_CR_AppOrderDto
+                {
+                    App_ID = Convert.ToInt32(reader["App_ID"]),
+                    App_Name = reader["App_Name"]?.ToString(),
+                    Default_Sort_Order = Convert.ToInt32(reader["Default_Sort_Order"]),
+                    Custom_Sort_Order = reader["Custom_Sort_Order"] != DBNull.Value ? Convert.ToInt32(reader["Custom_Sort_Order"]) : null,
+                    Mapped_Count = Convert.ToInt32(reader["Mapped_Count"])
+                });
+            }
+
+            return apps;
+        }
+
+        public async Task<MM_CR_ResultDto> SaveParameterAppOrder(MM_CR_AppOrderSaveDto order)
+        {
+            // Column order must match dbo.MM_CR_OrderList
+            var apps = new DataTable();
+            apps.Columns.Add("ID", typeof(int));
+            apps.Columns.Add("Sort_Order", typeof(int));
+            for (int i = 0; i < order.App_IDs.Count; i++)
+            {
+                apps.Rows.Add(order.App_IDs[i], i + 1);
+            }
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = CreateSpCommand("SP_CR_Save_Parameter_App_Order", connection);
+            command.Parameters.Add(new SqlParameter("@CR_Parameter_ID", order.CR_Parameter_ID));
+            command.Parameters.Add(new SqlParameter("@Apps", SqlDbType.Structured)
+            {
+                TypeName = "dbo.MM_CR_OrderList",
+                Value = apps
+            });
+            AddUserParameters(command, order.User_ID, order.Host);
 
             return await ExecuteResultAsync(command);
         }

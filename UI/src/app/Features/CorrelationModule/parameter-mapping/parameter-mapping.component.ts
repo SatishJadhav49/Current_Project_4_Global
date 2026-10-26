@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { CorrelationService } from '../correlation.service';
 import {
+  CrAppOrder,
   CrApplication,
   CrApplicationColumn,
   CrMapping,
@@ -55,6 +56,12 @@ export class ParameterMappingComponent implements OnInit {
     { value: 'unmapped', label: 'Unmapped' },
   ];
 
+  // Custom application order of this parameter (tabs here + report cards)
+  appOrderOpen = false;
+  appOrderLoading = false;
+  appOrderSaving = false;
+  appOrder: CrAppOrder[] = [];
+
   // Full-screen image of a row (read live from the application)
   viewerImage: CrViewerImage | null = null;
 
@@ -85,7 +92,7 @@ export class ParameterMappingComponent implements OnInit {
     this.pageError = '';
 
     forkJoin({
-      applications: this.correlationService.getApplications(),
+      applications: this.correlationService.getApplications(this.parameterId),
       details: this.correlationService.getParameterMappings(this.parameterId),
     }).subscribe({
       next: ({ applications, details }) => {
@@ -97,12 +104,7 @@ export class ParameterMappingComponent implements OnInit {
         }
 
         this.parameter = details.Parameter;
-        this.applications = (applications ?? []).map((app) => ({
-          ...app,
-          Columns: [...(app.Columns ?? [])].sort(
-            (a, b) => a.Sort_Order - b.Sort_Order
-          ),
-        }));
+        this.applications = this.prepareApplications(applications);
         this.setMappings(details.Mappings ?? []);
 
         if (this.applications.length) {
@@ -112,6 +114,85 @@ export class ParameterMappingComponent implements OnInit {
       error: () => {
         this.pageLoading = false;
         this.pageError = 'Unable to load the parameter. Please try again.';
+      },
+    });
+  }
+
+  private prepareApplications(applications: CrApplication[] | null | undefined): CrApplication[] {
+    return (applications ?? []).map((app) => ({
+      ...app,
+      Columns: [...(app.Columns ?? [])].sort((a, b) => a.Sort_Order - b.Sort_Order),
+    }));
+  }
+
+  //*************************************** Application order ***************************************//
+
+  openAppOrder(): void {
+    this.appOrderOpen = true;
+    this.appOrderLoading = true;
+    this.appOrder = [];
+
+    this.correlationService.getParameterAppOrder(this.parameterId).subscribe({
+      next: (apps) => {
+        this.appOrder = apps ?? [];
+        this.appOrderLoading = false;
+      },
+      error: () => {
+        this.appOrderLoading = false;
+        this.appOrderOpen = false;
+      },
+    });
+  }
+
+  closeAppOrder(): void {
+    if (!this.appOrderSaving) this.appOrderOpen = false;
+  }
+
+  moveApp(index: number, step: number): void {
+    const target = index + step;
+    if (target < 0 || target >= this.appOrder.length) return;
+
+    const list = [...this.appOrder];
+    [list[index], list[target]] = [list[target], list[index]];
+    this.appOrder = list;
+  }
+
+  get hasCustomAppOrder(): boolean {
+    return this.appOrder.some((app) => app.Custom_Sort_Order !== null && app.Custom_Sort_Order !== undefined);
+  }
+
+  /** Saves the shown order; reset = empty list (back to the default order). */
+  saveAppOrder(reset = false): void {
+    if (this.appOrderSaving) return;
+
+    this.appOrderSaving = true;
+    const appIds = reset ? [] : this.appOrder.map((app) => app.App_ID);
+
+    this.correlationService.saveParameterAppOrder(this.parameterId, appIds).subscribe({
+      next: (result) => {
+        this.appOrderSaving = false;
+        if (!result?.Is_Success) {
+          this.toastService.showWarning('Not Saved', result?.Message ?? 'Unable to save the order.');
+          return;
+        }
+
+        this.toastService.showSuccess('Saved', result.Message ?? 'Application order saved.');
+        this.appOrderOpen = false;
+        this.reloadApplications();
+      },
+      error: () => {
+        this.appOrderSaving = false;
+      },
+    });
+  }
+
+  /** Re-reads the tabs in the new order, keeping the selected application. */
+  private reloadApplications(): void {
+    this.correlationService.getApplications(this.parameterId).subscribe({
+      next: (applications) => {
+        const selectedId = this.selectedApp?.App_ID;
+        this.applications = this.prepareApplications(applications);
+        this.selectedApp = this.applications.find((app) => app.App_ID === selectedId) ?? this.selectedApp;
       },
     });
   }

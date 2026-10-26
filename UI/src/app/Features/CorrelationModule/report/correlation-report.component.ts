@@ -50,6 +50,7 @@ export class CorrelationReportComponent implements OnInit {
   /** Charts of the active graph tab (X Chart / Histogram) - used by the PDF export. */
   @ViewChildren('cardChart') cardCharts?: QueryList<ReportChart>;
   @ViewChild('parameterPicker') parameterPicker?: ElementRef<HTMLElement>;
+  @ViewChild('chartPicker') chartPicker?: ElementRef<HTMLElement>;
   @ViewChild('parameterSearchInput') parameterSearchInput?: ElementRef<HTMLInputElement>;
 
   // Filters
@@ -80,6 +81,10 @@ export class CorrelationReportComponent implements OnInit {
   activeChart: ChartTypeKey = 'xchart';
 
   zoomSeries: CrReportSeries | null = null;
+
+  /** Charts hidden in this view only - cleared by a new report or a page refresh. */
+  hiddenMappingIds = new Set<number>();
+  chartPickerOpen = false;
   viewerImage: CrViewerImage | null = null;
   exporting: 'excel' | 'pdf' | null = null;
 
@@ -107,14 +112,15 @@ export class CorrelationReportComponent implements OnInit {
     this.closeZoom();
   }
 
-  /** Closes the parameter dropdown on an outside click. */
+  /** Closes the parameter / chart dropdowns on an outside click. */
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (
-      this.parameterOpen &&
-      !this.parameterPicker?.nativeElement.contains(event.target as Node)
-    ) {
+    const target = event.target as Node;
+    if (this.parameterOpen && !this.parameterPicker?.nativeElement.contains(target)) {
       this.parameterOpen = false;
+    }
+    if (this.chartPickerOpen && !this.chartPicker?.nativeElement.contains(target)) {
+      this.chartPickerOpen = false;
     }
   }
 
@@ -267,6 +273,7 @@ export class CorrelationReportComponent implements OnInit {
       next: (report) => {
         this.loading = false;
         this.report = report ?? null;
+        this.hiddenMappingIds = new Set<number>();
         this.filterText = current.text;
       },
       error: () => {
@@ -277,6 +284,40 @@ export class CorrelationReportComponent implements OnInit {
 
   get series(): CrReportSeries[] {
     return this.report?.Series ?? [];
+  }
+
+  //*************************************** Show / hide charts ***************************************//
+
+  /** Charts shown on the page (and exported) - all minus the ones hidden in this view. */
+  get visibleSeries(): CrReportSeries[] {
+    return this.series.filter((s) => !this.hiddenMappingIds.has(s.Mapping_ID));
+  }
+
+  isHidden(series: CrReportSeries): boolean {
+    return this.hiddenMappingIds.has(series.Mapping_ID);
+  }
+
+  toggleChart(series: CrReportSeries): void {
+    const ids = new Set(this.hiddenMappingIds);
+    ids.has(series.Mapping_ID) ? ids.delete(series.Mapping_ID) : ids.add(series.Mapping_ID);
+    this.hiddenMappingIds = ids;
+  }
+
+  hideChart(series: CrReportSeries): void {
+    if (!this.isHidden(series)) this.toggleChart(series);
+  }
+
+  showAllCharts(): void {
+    this.hiddenMappingIds = new Set<number>();
+  }
+
+  hideAllCharts(): void {
+    this.hiddenMappingIds = new Set(this.series.map((s) => s.Mapping_ID));
+  }
+
+  /** Report limited to the visible charts - what the exports contain. */
+  private get visibleReport(): CrReport | null {
+    return this.report ? { ...this.report, Series: this.visibleSeries } : null;
   }
 
   get totalReadings(): number {
@@ -340,7 +381,7 @@ export class CorrelationReportComponent implements OnInit {
 
     this.exporting = 'excel';
     try {
-      await this.exportService.exportExcel(this.report, this.filterText);
+      await this.exportService.exportExcel(this.visibleReport!, this.filterText);
     } catch (error) {
       console.error('Correlation Excel export failed', error);
       this.toastService.showError('Export Failed', 'Unable to create the Excel file.');
@@ -359,7 +400,7 @@ export class CorrelationReportComponent implements OnInit {
         const image = await chart.getImage();
         if (image) images.set(chart.mappingId, image);
       }
-      await this.exportService.exportPdf(this.report, this.filterText, images, this.activeChartLabel);
+      await this.exportService.exportPdf(this.visibleReport!, this.filterText, images, this.activeChartLabel);
     } catch (error) {
       console.error('Correlation PDF export failed', error);
       this.toastService.showError('Export Failed', 'Unable to create the PDF file.');

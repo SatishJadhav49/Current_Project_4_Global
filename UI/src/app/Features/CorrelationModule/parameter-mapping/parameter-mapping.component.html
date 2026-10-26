@@ -39,6 +39,20 @@
           }
         </div>
       </div>
+
+      @if (parameter && applications.length) {
+      <button
+        type="button"
+        (click)="openAppOrder()"
+        class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+        title="Order of the applications for this parameter (tabs and report charts)"
+      >
+        <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+        </svg>
+        Application order
+      </button>
+      }
     </div>
   </div>
 
@@ -412,4 +426,94 @@
 <!-- Image viewer (full screen) -->
 @if (viewerImage) {
 <app-cr-image-viewer [image]="viewerImage" (closed)="viewerImage = null"></app-cr-image-viewer>
+}
+
+<!-- Application order (this parameter only) -->
+@if (appOrderOpen) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm" (click)="closeAppOrder()">
+  <div class="flex max-h-[90vh] w-full max-w-md flex-col rounded-xl bg-white shadow-xl" (click)="$event.stopPropagation()">
+    <div class="border-b border-slate-100 px-6 py-4">
+      <h2 class="text-base font-semibold text-slate-900">Application order</h2>
+      <p class="mt-0.5 text-sm text-slate-500">
+        For <span class="font-medium text-slate-700">{{ parameter?.Parameter_Name }}</span> only - the tabs here and the report charts follow this order.
+      </p>
+    </div>
+
+    <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+      @if (appOrderLoading) {
+      <div class="space-y-2">
+        @for (item of [1, 2, 3, 4]; track item) {
+        <div class="h-11 animate-pulse rounded-lg bg-slate-100"></div>
+        }
+      </div>
+      } @else {
+      <ol class="space-y-1.5">
+        @for (app of appOrder; track app.App_ID; let i = $index; let first = $first; let last = $last) {
+        <li class="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{{ i + 1 }}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block truncate text-sm font-medium text-slate-800">{{ app.App_Name }}</span>
+            <span class="text-xs" [ngClass]="app.Mapped_Count ? 'text-emerald-600' : 'text-slate-400'">
+              {{ app.Mapped_Count ? app.Mapped_Count + ' mapped' : 'nothing mapped' }}
+            </span>
+          </span>
+          <button
+            type="button"
+            (click)="moveApp(i, -1)"
+            [disabled]="first"
+            class="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+            title="Move up"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            (click)="moveApp(i, 1)"
+            [disabled]="last"
+            class="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
+            title="Move down"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+        </li>
+        }
+      </ol>
+      }
+    </div>
+
+    <div class="flex items-center justify-between gap-2 rounded-b-xl border-t border-slate-100 bg-slate-50 px-6 py-3">
+      <button
+        type="button"
+        (click)="saveAppOrder(true)"
+        [disabled]="appOrderSaving || appOrderLoading || !hasCustomAppOrder"
+        class="text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-40"
+        title="Back to the default application order"
+      >
+        Reset to default
+      </button>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          (click)="closeAppOrder()"
+          [disabled]="appOrderSaving"
+          class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="saveAppOrder()"
+          [disabled]="appOrderSaving || appOrderLoading"
+          class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {{ appOrderSaving ? "Saving..." : "Save order" }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 }

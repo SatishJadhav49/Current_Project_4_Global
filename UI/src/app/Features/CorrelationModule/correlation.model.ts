@@ -97,6 +97,15 @@ export interface CrMappingSave {
   Host?: string;
 }
 
+/** One application in a parameter's custom application order. */
+export interface CrAppOrder {
+  App_ID: number;
+  App_Name?: string;
+  Default_Sort_Order: number;
+  Custom_Sort_Order?: number | null;
+  Mapped_Count: number;
+}
+
 export interface CrUnmap {
   Mapping_IDs: number[];
   User_ID?: number | null;

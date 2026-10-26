@@ -343,3 +343,30 @@ DECLARE @L dbo.MM_CR_LeafList;
 INSERT INTO @L (Source_Leaf_ID, Source_Leaf_Type) VALUES (<Location_ID>, N'LH / Gap');
 EXEC dbo.SP_CR_Get_Readings_Master_Checker @Leaves = @L, @Last_N = 10;
 ```
+
+---
+
+## 19. Report + Mapping (2026-10-26): every date on the X axis, hide charts, custom application order
+
+**SQL:** run `SQL/11_App_Order.sql` (whole file, F5) after 01–10.
+- New table `MM_CR_Parameter_App_Order` (parameter + application + sort order) and table type `MM_CR_OrderList`.
+- `SP_CR_Get_Parameter_App_Order` / `SP_CR_Save_Parameter_App_Order` (saving an empty list = back to default).
+- `SP_CR_Get_Applications` (optional `@CR_Parameter_ID`) and `SP_CR_Get_Report_Mappings` now follow the parameter's custom order; the same
+  versions are kept in `03_SPs_Mapping.sql` / `07_Report.sql`, so re-running those keeps it.
+
+**1. X axis shows every date:** one tick per reading, so 20 points print 20 dates (rotated; the font gets smaller above 40 points).
+
+**2. Hide charts (this view only):** each report card has a **hide** (eye) button, and a **Charts n / total** dropdown next to the graph tabs lists all
+charts with checkboxes (Show all / Hide all). Hidden charts are left out of Excel / PDF too. Nothing is saved: a new Generate or a page
+refresh shows all charts again.
+
+**3. Custom application order per parameter:** Parameter Mapping page → **Application order** button → move applications up / down →
+**Save order** (or **Reset to default**). The tabs on that page and the **report charts** follow this order for that parameter only; other
+parameters keep the default order.
+
+**Files**
+- SQL: new `11_App_Order.sql`; changed `03_SPs_Mapping.sql`, `07_Report.sql`
+- API: `Controllers/MM_CR_MappingController.cs` (`GetApplications?crParameterId=`, `GetParameterAppOrder/{id}`, `SaveParameterAppOrder`),
+  `Data/MM_CR_MappingDataService.cs`, `Models/MM_CR_MappingDtos.cs`
+- UI: `correlation.model.ts`, `correlation.service.ts`, `report/x-chart.component.ts`, `report/correlation-report.component.ts|html`,
+  `parameter-mapping/parameter-mapping.component.ts|html`

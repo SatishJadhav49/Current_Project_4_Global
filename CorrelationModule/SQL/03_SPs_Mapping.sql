@@ -31,14 +31,18 @@ GO
    Active applications (RS1) + their grid columns (RS2)
    --------------------------------------------------------------------- */
 CREATE OR ALTER PROCEDURE dbo.SP_CR_Get_Applications
+    @CR_Parameter_ID INT = NULL   -- when given, apps follow that parameter's custom order
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT App_ID, App_Code, App_Name, Leaf_Level_Name, Sort_Order
-    FROM dbo.MM_CR_Application
-    WHERE Is_Active = 1
-    ORDER BY Sort_Order, App_Name;
+    SELECT a.App_ID, a.App_Code, a.App_Name, a.Leaf_Level_Name, a.Sort_Order
+    FROM dbo.MM_CR_Application a
+    LEFT JOIN dbo.MM_CR_Parameter_App_Order o
+           ON o.CR_Parameter_ID = @CR_Parameter_ID AND o.App_ID = a.App_ID
+    WHERE a.Is_Active = 1
+    -- custom order first; apps not in it keep their default order after them
+    ORDER BY CASE WHEN o.Sort_Order IS NULL THEN 1 ELSE 0 END, o.Sort_Order, a.Sort_Order, a.App_Name;
 
     SELECT c.App_ID, c.Column_Key, c.Column_Header, c.Sort_Order, c.Is_Filterable
     FROM dbo.MM_CR_Application_Column c

@@ -42,11 +42,11 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Controllers
         }
 
         [HttpGet("GetApplications")]
-        public async Task<IActionResult> GetApplications()
+        public async Task<IActionResult> GetApplications([FromQuery] int? crParameterId)
         {
             try
             {
-                var applications = await _mappingDataService.GetApplications();
+                var applications = await _mappingDataService.GetApplications(crParameterId > 0 ? crParameterId : null);
                 return Ok(_responseHelper.CreateSuccessResponse(applications, "Success", "Applications retrieved successfully"));
             }
             catch (Exception ex)
@@ -176,6 +176,40 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Controllers
             catch (Exception ex)
             {
                 return await HandleExceptionAsync(ex, "SaveMappings");
+            }
+        }
+
+        [HttpGet("GetParameterAppOrder/{crParameterId}")]
+        public async Task<IActionResult> GetParameterAppOrder(int crParameterId)
+        {
+            try
+            {
+                var apps = await _mappingDataService.GetParameterAppOrder(crParameterId);
+                return Ok(_responseHelper.CreateSuccessResponse(apps, "Success", "Application order retrieved successfully"));
+            }
+            catch (Exception ex)
+            {
+                return await HandleExceptionAsync(ex, "GetParameterAppOrder");
+            }
+        }
+
+        /// <summary>Saves the parameter's application order; an empty App_IDs list resets to default.</summary>
+        [HttpPost("SaveParameterAppOrder")]
+        public async Task<IActionResult> SaveParameterAppOrder([FromBody] MM_CR_AppOrderSaveDto order)
+        {
+            try
+            {
+                if (order == null || order.CR_Parameter_ID <= 0)
+                {
+                    return BadRequest(_responseHelper.CreateErrorResponse<object>(Constants.Messages.VALIDATION_ERROR, "Parameter is required"));
+                }
+
+                var result = await _mappingDataService.SaveParameterAppOrder(order);
+                return Ok(_responseHelper.CreateSuccessResponse(result, "Success", result.Message ?? string.Empty));
+            }
+            catch (Exception ex)
+            {
+                return await HandleExceptionAsync(ex, "SaveParameterAppOrder");
             }
         }
 

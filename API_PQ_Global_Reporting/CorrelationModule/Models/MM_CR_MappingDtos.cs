@@ -108,6 +108,25 @@ namespace API_PQ_Global_Reporting.CorrelationModule.Models
         public string? Host { get; set; }
     }
 
+    /// <summary>One application in a parameter's application order (order editor).</summary>
+    public class MM_CR_AppOrderDto
+    {
+        public int App_ID { get; set; }
+        public string? App_Name { get; set; }
+        public int Default_Sort_Order { get; set; }
+        public int? Custom_Sort_Order { get; set; }
+        public int Mapped_Count { get; set; }
+    }
+
+    /// <summary>App_IDs in the wanted order; an empty list resets to the default order.</summary>
+    public class MM_CR_AppOrderSaveDto
+    {
+        public int CR_Parameter_ID { get; set; }
+        public List<int> App_IDs { get; set; } = new();
+        public decimal? User_ID { get; set; }
+        public string? Host { get; set; }
+    }
+
     public class MM_CR_UnmapDto
     {
         public List<int> Mapping_IDs { get; set; } = new();
