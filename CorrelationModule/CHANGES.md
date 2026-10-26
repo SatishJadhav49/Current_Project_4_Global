@@ -318,3 +318,28 @@ EXEC dbo.SP_CR_Get_Readings_CMM @Leaves = @L, @Last_N = 10;
 - **CTQ (Critical To Quality), view only:** the CMM master SP returns a `CTQ` column per Parameter + Co-ordinate: **"CTQ"** when `IS_CTQ = 1`
   on any of its spec rows (the spec table can repeat the combination), empty otherwise. A **CTQ** grid column (filterable) is registered, so it
   shows on the Mapping page after Co-ordinate. Type "CTQ" in its column filter to list only critical points.
+
+---
+
+## 18. New application: Master Checker (2026-10-26)
+
+**SQL only:** run `SQL/10_App_Master_Checker.sql` (whole file, F5) after 01–09. **No API / UI change and no redeploy.**
+The last grid must show Master_SP = OK, Reading_SP = OK, Grid_Columns = 4.
+
+- **Database:** `[PQ_Master_Checker]`; models matched by name via `MM_Model`; only active parts / locations.
+- **Grid columns:** Part · Side · Location · Gap / Flush (all filterable). New tab after CMM (change `Sort_Order` to move it).
+  A part with **Is_LH and Is_RH** gives **separate LH and RH rows** (and Common when Is_Common); a location with Is_Gap and Is_Flush gives
+  separate Gap and Flush rows.
+- **Mapping item:** `Location_ID` + type **"Side / Measure"**, e.g. `LH / Gap`, `Common / Flush` (stored in `Source_Leaf_Type`; also shown as the
+  tag on report cards). Only the side (e.g. `RH`) when the location has no Gap/Flush flag; only the measure when the part has no side flag.
+- **Readings:** `MM_Audit_Sheet_Details.Reading` (single reading, X chart), `Is_NA <> 1`, LSL / USL from the reading's own spec (`Spec_ID`).
+  Side is matched on **`sheet.Side`** (text LH / RH / Common), Gap / Flush on **`spec.Is_Gap` / `spec.Is_Flush`**. Date range and Last N both work.
+- **Images:** stored in an application server folder, **not added yet** (`Image_SP_Name` NULL, no image icons).
+
+**Test in SSMS**
+```sql
+EXEC dbo.SP_CR_Get_Master_Master_Checker @Model_Name = N'<model name>';
+DECLARE @L dbo.MM_CR_LeafList;
+INSERT INTO @L (Source_Leaf_ID, Source_Leaf_Type) VALUES (<Location_ID>, N'LH / Gap');
+EXEC dbo.SP_CR_Get_Readings_Master_Checker @Leaves = @L, @Last_N = 10;
+```
