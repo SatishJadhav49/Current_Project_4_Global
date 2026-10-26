@@ -370,3 +370,13 @@ parameters keep the default order.
   `Data/MM_CR_MappingDataService.cs`, `Models/MM_CR_MappingDtos.cs`
 - UI: `correlation.model.ts`, `correlation.service.ts`, `report/x-chart.component.ts`, `report/correlation-report.component.ts|html`,
   `parameter-mapping/parameter-mapping.component.ts|html`
+
+---
+
+## 20. Application order (2026-10-26): drag & drop instead of up / down arrows
+
+**UI only.** In the **Application order** dialog the rows are now dragged into place (grip handle on each row; the list reorders live while
+dragging, and the dragged row is shown dashed). It uses the browser's native HTML5 drag & drop, so **no new npm package** is needed.
+Save / Reset work as before.
+
+**Files:** `parameter-mapping/parameter-mapping.component.ts|html`

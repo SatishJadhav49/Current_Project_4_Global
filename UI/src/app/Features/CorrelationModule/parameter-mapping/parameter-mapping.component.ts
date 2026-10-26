@@ -61,6 +61,8 @@ export class ParameterMappingComponent implements OnInit {
   appOrderLoading = false;
   appOrderSaving = false;
   appOrder: CrAppOrder[] = [];
+  /** Index of the row being dragged in the order list (native HTML5 drag & drop). */
+  dragIndex: number | null = null;
 
   // Full-screen image of a row (read live from the application)
   viewerImage: CrViewerImage | null = null;
@@ -148,13 +150,37 @@ export class ParameterMappingComponent implements OnInit {
     if (!this.appOrderSaving) this.appOrderOpen = false;
   }
 
-  moveApp(index: number, step: number): void {
-    const target = index + step;
-    if (target < 0 || target >= this.appOrder.length) return;
+  //---- Drag & drop: the list reorders live while the row is dragged over others ----
 
-    const list = [...this.appOrder];
-    [list[index], list[target]] = [list[target], list[index]];
-    this.appOrder = list;
+  onDragStart(index: number, event: DragEvent): void {
+    this.dragIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(index)); // required by Firefox
+    }
+  }
+
+  onDragOver(index: number, event: DragEvent): void {
+    if (this.dragIndex === null) return;
+    event.preventDefault(); // allows the drop
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+
+    if (index !== this.dragIndex) {
+      const list = [...this.appOrder];
+      const [moved] = list.splice(this.dragIndex, 1);
+      list.splice(index, 0, moved);
+      this.appOrder = list;
+      this.dragIndex = index;
+    }
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragIndex = null;
+  }
+
+  onDragEnd(): void {
+    this.dragIndex = null;
   }
 
   get hasCustomAppOrder(): boolean {

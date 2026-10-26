@@ -437,6 +437,7 @@
       <p class="mt-0.5 text-sm text-slate-500">
         For <span class="font-medium text-slate-700">{{ parameter?.Parameter_Name }}</span> only - the tabs here and the report charts follow this order.
       </p>
+      <p class="mt-1 text-xs text-slate-400">Drag the applications into the order you want.</p>
     </div>
 
     <div class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
@@ -448,8 +449,26 @@
       </div>
       } @else {
       <ol class="space-y-1.5">
-        @for (app of appOrder; track app.App_ID; let i = $index; let first = $first; let last = $last) {
-        <li class="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2">
+        @for (app of appOrder; track app.App_ID; let i = $index) {
+        <li
+          draggable="true"
+          (dragstart)="onDragStart(i, $event)"
+          (dragover)="onDragOver(i, $event)"
+          (drop)="onDrop($event)"
+          (dragend)="onDragEnd()"
+          class="flex cursor-grab select-none items-center gap-3 rounded-lg border px-3 py-2 transition active:cursor-grabbing"
+          [ngClass]="
+            dragIndex === i
+              ? 'border-dashed border-indigo-400 bg-indigo-50 opacity-70'
+              : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+          "
+        >
+          <!-- Drag handle -->
+          <svg class="h-5 w-5 shrink-0 text-slate-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="7" cy="5" r="1.5" /><circle cx="13" cy="5" r="1.5" />
+            <circle cx="7" cy="10" r="1.5" /><circle cx="13" cy="10" r="1.5" />
+            <circle cx="7" cy="15" r="1.5" /><circle cx="13" cy="15" r="1.5" />
+          </svg>
           <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{{ i + 1 }}</span>
           <span class="min-w-0 flex-1">
             <span class="block truncate text-sm font-medium text-slate-800">{{ app.App_Name }}</span>
@@ -457,28 +476,6 @@
               {{ app.Mapped_Count ? app.Mapped_Count + ' mapped' : 'nothing mapped' }}
             </span>
           </span>
-          <button
-            type="button"
-            (click)="moveApp(i, -1)"
-            [disabled]="first"
-            class="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
-            title="Move up"
-          >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            (click)="moveApp(i, 1)"
-            [disabled]="last"
-            class="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30"
-            title="Move down"
-          >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-          </button>
         </li>
         }
       </ol>
